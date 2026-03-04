@@ -60,6 +60,7 @@
         .email-row:hover { box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,.3); z-index: 10; position:relative;}
         .email-row.unread { font-weight: bold; background: rgba(11,87,208,0.04); }
         
+        /* The crucial user-select logic for copying text */
         .copyable-text { user-select: text !important; cursor: text !important; }
         
         .btn-outline { background: #fff; border: 1px solid var(--border); padding: 8px 16px; border-radius: 16px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; color:var(--text-muted); transition:0.2s; user-select:none;}
@@ -102,8 +103,8 @@
         @keyframes popin { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes shake { 0%,100%{transform:translate(0,0) rotate(0);} 10%,30%,50%,70%,90%{transform:translate(-2px,-2px) rotate(-2deg);} 20%,40%,60%,80%{transform:translate(2px,2px) rotate(2deg);} }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .flash-anim { animation: flashBuy 0.5s ease; }
         @keyframes flashBuy { 0% { background: #fff; } 50% { background: #00c805; } 100% { background: var(--mkt-bg); } }
+        .flash-anim { animation: flashBuy 0.5s ease; }
     </style>
 </head>
 <body>
@@ -123,12 +124,10 @@
         <div class="chrome-tab" id="tab-btn-gov" onclick="game.switchChromeTab('gov')"><span class="material-icons" style="font-size:14px; color:#002244;">account_balance</span> IC3.gov</div>
     </div>
 
-    <div id="main-menu" class="overlay" style="display:flex; background:#fff; color:#000; z-index:999999;">
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; width:100%;">
-            <h1 style="font-family:monospace; font-size:4.5rem; margin-bottom: 20px; letter-spacing:-2px;">FED_OS // <span style="color:var(--primary);">v34.0</span></h1>
-            <p style="color:var(--urgent); font-weight:bold; font-size:1.4rem; margin-bottom: 40px; display:inline-block; background:#fff3cd; padding:16px 24px; border-radius:8px; border-left:4px solid var(--urgent);">CRITICAL ALERT: NATIONAL CITIZEN DATABASE PURGED.</p>
-            <br><button class="btn-primary" style="padding:16px 40px; font-size:18px;" onclick="game.startDay()"><span class="material-icons">volume_up</span> TURN ON SOUND & INITIALIZE</button>
-        </div>
+    <div id="main-menu" class="overlay" style="display:flex; background:#fff; color:#000;">
+        <h1 style="font-family:monospace; font-size:4.5rem; margin-bottom: 20px; letter-spacing:-2px;">FED_OS // <span style="color:var(--primary);">v33.0</span></h1>
+        <p style="color:var(--urgent); font-weight:bold; font-size:1.4rem; margin-bottom: 40px; background:#fff3cd; padding:16px 24px; border-radius:8px; border-left:4px solid var(--urgent);">CRITICAL ALERT: NATIONAL CITIZEN DATABASE PURGED.</p>
+        <button class="btn-primary" style="padding:16px 40px; font-size:18px;" onclick="game.startDay()"><span class="material-icons">volume_up</span> TURN ON SOUND & INITIALIZE</button>
     </div>
 
     <div id="os-toast-container"></div>
@@ -149,14 +148,14 @@
             <h1 style="font-size:3rem; margin-bottom:10px; text-shadow:0 4px 12px rgba(234,67,53,0.5);">INCOMING SECURE CALL</h1>
             <h2 style="color:#ccc; margin-bottom:40px;">Caller ID: POTUS (The President)</h2>
             <div style="display:flex; gap:20px; justify-content:center;">
-                <button style="background:#188038; color:#fff; padding:20px 40px; border-radius:40px; font-size:24px; font-weight:bold; border:none; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="game.handlePhone(true)">ACCEPT</button>
-                <button style="background:#ea4335; color:#fff; padding:20px 40px; border-radius:40px; font-size:24px; font-weight:bold; border:none; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="game.handlePhone(false)">DECLINE</button>
+                <button style="background:#188038; color:#fff; padding:20px 40px; border-radius:40px; font-size:24px; font-weight:bold; border:none; cursor:pointer;" onclick="game.handlePhone(true)">ACCEPT</button>
+                <button style="background:#ea4335; color:#fff; padding:20px 40px; border-radius:40px; font-size:24px; font-weight:bold; border:none; cursor:pointer;" onclick="game.handlePhone(false)">DECLINE</button>
             </div>
         </div>
     </div>
 
     <div id="overlay-hacker" class="overlay" style="background:rgba(0,0,0,0.95);">
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:800px; max-width:90%; height:70vh; background:#0c0c0c; border:2px solid var(--term-green); border-radius:8px; box-shadow:0 0 40px rgba(0,255,65,0.2); display:flex; flex-direction:column; font-family:monospace; padding:20px; overflow:hidden;">
+        <div style="width:800px; max-width:90%; height:70vh; background:#0c0c0c; border:2px solid var(--term-green); border-radius:8px; box-shadow:0 0 40px rgba(0,255,65,0.2); display:flex; flex-direction:column; font-family:monospace; padding:20px; overflow:hidden;">
             <div style="color:var(--term-green); font-size:20px; font-weight:bold; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:20px; text-align:left;">UNKNOWN CONNECTION ESTABLISHED // PORT 666</div>
             <div id="hacker-chat-log" style="flex-grow:1; overflow-y:auto; color:var(--term-green); font-size:16px; line-height:1.6; text-align:left; display:flex; flex-direction:column; gap:16px;"></div>
             <div id="hacker-options" style="display:flex; flex-direction:column; gap:10px; margin-top:20px;"></div>
@@ -182,14 +181,6 @@
             <h2 style="color:var(--urgent); margin:10px 0;">LEGAL NOTICE</h2>
             <p id="lawsuit-text" style="font-size:16px; line-height:1.6; margin-bottom:20px;"></p>
             <button class="btn-primary" onclick="document.getElementById('overlay-lawsuit').style.display='none'">ACKNOWLEDGE</button>
-        </div>
-    </div>
-
-    <div id="crypto-transfer-overlay" class="overlay">
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; background:rgba(255,255,255,0.95); padding:60px; border-radius:12px; color:#0055ff; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
-            <div style="border: 6px solid #e0e0e0; border-top: 6px solid #0055ff; border-radius: 50%; width: 80px; height: 80px; animation: spin 1s linear infinite; margin:0 auto;"></div>
-            <h2 style="margin-top:30px; letter-spacing:2px; font-size:24px;">VERIFYING BLOCKCHAIN...</h2>
-            <div style="width:400px; height:24px; background:#eee; border-radius:12px; margin-top:30px; overflow:hidden; border:1px solid #ccc;"><div id="cr-prog" style="height:100%; width:0%; background:#28a745; transition:width 2.5s cubic-bezier(0.4, 0, 0.2, 1);"></div></div>
         </div>
     </div>
 
@@ -239,7 +230,7 @@
                             </div>
                             <div id="email-body-view" class="copyable-text" style="white-space:pre-wrap; color:#222; margin-top:32px; margin-left:52px; line-height:1.6; font-size:15px; max-width:800px;">Body</div>
                             
-                            <div style="margin-top: 40px; margin-left:52px; display:flex; gap:12px; user-select:none;">
+                            <div style="margin-top: 40px; margin-left:52px; display:flex; gap:12px;">
                                 <button class="btn-outline" onclick="game.prepReply()"><span class="material-icons-outlined" style="font-size:18px;">reply</span> Reply</button>
                                 <button class="btn-outline" onclick="game.prepForward()"><span class="material-icons-outlined" style="font-size:18px;">forward</span> Forward</button>
                             </div>
@@ -270,7 +261,7 @@
             <div id="compose-window" style="display:none; position:absolute; bottom:0; right:280px; width:500px; height:500px; background:#fff; border-radius:8px 8px 0 0; box-shadow:0 8px 24px rgba(0,0,0,0.3); flex-direction:column; z-index:1000; animation: slideDown 0.3s reverse;">
                 <div style="background:#f2f6fc; padding:12px 16px; display:flex; justify-content:space-between; font-weight:500; border-bottom:1px solid #eee; align-items:center;">
                     <span>New Message</span>
-                    <span class="material-icons btn-outline" style="padding:4px; border:none; cursor:pointer;" onclick="document.getElementById('compose-window').style.display='none'">close</span>
+                    <span class="material-icons icon-btn" style="padding:4px; cursor:pointer;" onclick="document.getElementById('compose-window').style.display='none'">close</span>
                 </div>
                 <input type="text" id="comp-to" placeholder="To" style="border:none; border-bottom:1px solid #f1f3f4; padding:12px 16px; outline:none; font-family:inherit; font-size:14px; width:100%;">
                 <input type="text" id="comp-sub" placeholder="Subject" style="border:none; border-bottom:1px solid #f1f3f4; padding:12px 16px; outline:none; font-family:inherit; font-size:14px; width:100%;">
@@ -293,7 +284,7 @@
                     <div class="sl-channel active" id="sl-chan-cabinet-crisis" onclick="game.swSlk('#cabinet-crisis')"><span class="material-icons" style="font-size:14px; color:#80848e; margin-right:4px;">lock</span> cabinet-crisis</div>
                     <div style="padding:24px 16px 4px; font-size:12px; font-weight:bold; color:#949ba4;">DIRECT MESSAGES</div>
                     <div class="sl-channel" id="sl-chan-sarah" onclick="game.swSlk('@Sarah')"><div style="width:24px; height:24px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=Sarah') center/cover; margin-right:4px;"></div> Dir. Cyber Sarah <span class="badge" id="sl-badge-sarah">!</span></div>
-                    <div class="sl-channel" id="sl-chan-dave" onclick="game.swSlk('@Dave')"><div style="width:24px; height:24px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=Dave') center/cover; margin-right:4px;"></div> Dave (Sales) <span class="badge" id="sl-badge-dave">!</span></div>
+                    <div class="sl-channel" id="sl-chan-dave" onclick="game.swSlk('@Dave(Sales)')"><div style="width:24px; height:24px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=Dave') center/cover; margin-right:4px;"></div> Dave (Sales) <span class="badge" id="sl-badge-dave">!</span></div>
                     <div class="sl-channel" id="sl-chan-genmark" onclick="game.swSlk('@Gen_Mark')"><div style="width:24px; height:24px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=Mark') center/cover; margin-right:4px;"></div> Gen. Mark <span class="badge" id="sl-badge-genmark">!</span></div>
                 </div>
                 <div style="flex-grow:1; display:flex; flex-direction:column; background:#313338; color:#dbdee1;">
@@ -311,7 +302,7 @@
             <div class="browser-content" id="browser-aws" style="flex-direction:row; background:#fff; user-select:none;">
                 <div style="width:250px; background:#fafafa; border-right:1px solid var(--border); padding:20px; flex-shrink:0;">
                     <div style="font-weight:bold; margin-bottom:20px; font-size:16px; display:flex; align-items:center; gap:8px;"><span class="material-icons" style="color:#ff9900;">cloud</span> GovCloud</div>
-                    <div style="padding:12px 8px; cursor:pointer; font-weight:500;" onclick="game.connectAws('ec2')">EC2 Dashboard</div>
+                    <div style="padding:12px 8px; cursor:pointer; font-weight:500;" onclick="document.getElementById('aws-ec2-view').style.display='block'; document.getElementById('aws-term-view').style.display='none';">EC2 Dashboard</div>
                 </div>
                 <div style="flex-grow:1; display:flex; flex-direction:column; overflow:hidden;">
                     <div id="aws-ec2-view" style="padding:40px; overflow-y:auto; height:100%;">
@@ -319,7 +310,7 @@
                         <table style="width:100%; border-collapse:collapse; text-align:left; border:1px solid var(--border);">
                             <tr style="background:#fafafa; border-bottom:2px solid #ccc;"><th style="padding:12px;">Name</th><th style="padding:12px;">State</th><th style="padding:12px;">Connect</th></tr>
                             <tr style="border-bottom:1px solid #eee;"><td style="padding:12px; font-family:monospace; font-size:16px;">Cluster_1_Web</td><td style="padding:12px; color:green; font-weight:bold;">Running</td><td style="padding:12px;"><button class="btn-primary" style="background:#ccc; color:#666;" disabled>SSH</button></td></tr>
-                            <tr style="background:#fff3cd;"><td style="padding:12px; font-family:monospace; font-size:16px; font-weight:bold;">Cluster_4_DB_Main</td><td style="padding:12px; color:red; font-weight:bold;">Alert (Purged)</td><td style="padding:12px;"><button class="btn-primary" onclick="game.connectAws('term')">Connect SSH</button></td></tr>
+                            <tr style="background:#fff3cd;"><td style="padding:12px; font-family:monospace; font-size:16px; font-weight:bold;">Cluster_4_DB_Main</td><td style="padding:12px; color:red; font-weight:bold;">Alert (Purged)</td><td style="padding:12px;"><button class="btn-primary" onclick="document.getElementById('aws-ec2-view').style.display='none'; document.getElementById('aws-term-view').style.display='flex'; setTimeout(()=>document.getElementById('term-input').focus(), 100);">Connect SSH</button></td></tr>
                         </table>
                     </div>
                     <div id="aws-term-view" style="display:none; flex-direction:column; height:100%; background:var(--term-bg); color:var(--term-green); font-family:monospace; padding:24px; overflow-y:auto; font-size:16px;" onclick="document.getElementById('term-input').focus()">
@@ -364,7 +355,11 @@
                             <div style="padding:16px; font-family:monospace; font-size:14px; line-height:1.6; color:#e6edf3; overflow-x:auto;">
 <span style="color:#ff7b72;">function</span> <span style="color:#d2a8ff;">executePurge</span>(targets, options) {
     <span style="color:#ff7b72;">if</span> (!targets) <span style="color:#ff7b72;">return</span> false;
-    <span style="color:#8b949e;">// Code updated in PR #1102. Click 'Review Code' to inspect.</span>
+    <div style="background:#4e1115; color:#ffa198; padding:2px 4px; margin:4px 0;">- if (!options.safeMode) throw new Error("Blocked");</div>
+    <div style="background:#0f5323; color:#3fb950; padding:2px 4px; margin:4px 0;">+ // Disabled safeMode check for speed. Will revert later.</div>
+    <div style="background:#0f5323; color:#3fb950; padding:2px 4px; margin:4px 0;">+ executePurge(db.getAllCitizens());</div>
+    logger.info(<span style="color:#a5d6ff;">"Purge successful."</span>);
+    <span style="color:#ff7b72;">return</span> true;
 }
                             </div>
                         </div>
@@ -420,7 +415,7 @@
                     <div id="tw-profile-view" style="display:none; flex-direction:column; width:100%;">
                         <div style="padding:16px; font-weight:bold; border-bottom:1px solid var(--tw-border); display:flex; align-items:center; gap:24px; position:sticky; top:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(12px); z-index:10;">
                             <span class="material-icons" style="cursor:pointer; padding:8px; border-radius:50%; transition:0.2s;" onmouseover="this.style.background='#181818'" onmouseout="this.style.background='transparent'" onclick="game.switchTwView('home')">arrow_back</span>
-                            <div><div id="prof-header-name" style="font-size:20px;">Name</div></div>
+                            <div><div id="prof-header-name" style="font-size:20px;">Name</div><div style="font-size:13px; color:var(--tw-muted); font-weight:normal;" id="prof-header-tweets">0 posts</div></div>
                         </div>
                         <div id="tw-profile-content"></div>
                         <div style="display:flex; border-bottom:1px solid var(--tw-border); margin-top:16px;">
@@ -527,17 +522,14 @@
                         <h2 style="color:#fff; margin-bottom:20px;">Dread Marketplace</h2>
                         <div style="border:1px solid #333; padding:20px; margin-bottom:20px; background:#111;">
                             <h3 style="color:#ff5000;">SELL: Gov Access Codes</h3>
-                            <p style="color:#aaa; margin:10px 0;">Sell your clearance keys. Highly illegal.</p>
                             <button style="background:#ff5000; color:#fff; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;" onclick="game.sellCodes()">SELL (+$15,000 / +15% Stress)</button>
                         </div>
                         <div style="border:1px solid #333; padding:20px; margin-bottom:20px; background:#111;">
                             <h3 style="color:var(--primary);">BUY: Fake Identity</h3>
-                            <p style="color:#aaa; margin:10px 0;">Scrub your name from the DOJ list. Relieves massive stress.</p>
                             <button style="background:var(--primary); color:#fff; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;" onclick="game.buyIdentity()">BUY (-$30,000 / -30% Stress)</button>
                         </div>
                         <div style="border:1px solid #333; padding:20px; background:#111;">
                             <h3 style="color:#00c805;">BUY: Private Offshore Island</h3>
-                            <p style="color:#aaa; margin:10px 0;">Disappear forever. Win the game immediately.</p>
                             <button style="background:#00c805; color:#000; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;" onclick="game.buyIsland()">BUY (-$2,500,000)</button>
                         </div>
                     </div>
@@ -604,36 +596,8 @@
     </div>
 
     <script>
-        // GLOBAL ERROR SHIELD - Prevents silent crashes from killing the clock
+        // Global Error Shield
         window.onerror = function(message, source, lineno, colno, error) { console.warn("Game Shield caught error: ", message); return true; };
-
-        const audio = {
-            ctx: null, hbTimer: null,
-            init() { try { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.ctx.resume(); } catch(e) {} },
-            playTone(freq, type, dur, vol, delay=0) {
-                if(!this.ctx || game.settingsMute) return;
-                try {
-                    setTimeout(() => {
-                        let osc = this.ctx.createOscillator(); let gain = this.ctx.createGain();
-                        osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                        gain.gain.setValueAtTime(vol, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
-                        osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime + dur);
-                    }, delay);
-                } catch(e) {}
-            },
-            gmail() { this.playTone(880, 'sine', 0.5, 0.1); this.playTone(1108, 'sine', 0.5, 0.1, 100); },
-            slack() { this.playTone(400, 'square', 0.1, 0.05); this.playTone(300, 'square', 0.1, 0.05, 100); },
-            tweet() { this.playTone(1200, 'triangle', 0.1, 0.05); this.playTone(1500, 'triangle', 0.1, 0.05, 100); },
-            error() { this.playTone(150, 'sawtooth', 0.5, 0.2); this.playTone(100, 'sawtooth', 0.5, 0.2, 200); },
-            heartbeat() { 
-                if(!this.ctx || game.settingsMute || game.stress < 50) return; 
-                let speed = game.stress > 80 ? 400 : 800; let vol = game.stress/100 * 0.5; 
-                this.playTone(60, 'sine', 0.3, vol); setTimeout(()=>this.playTone(55, 'sine', 0.3, vol), 200); 
-                if(!this.hbTimer) this.hbTimer = setInterval(()=> {
-                    if(game.stress >= 50 && !game.settingsMute) { let v = game.stress/100 * 0.5; this.playTone(60, 'sine', 0.3, v); setTimeout(()=>this.playTone(55, 'sine', 0.3, v), 200); }
-                }, speed);
-            }
-        };
 
         const game = {
             activeChromeTab: 'workspace', gameStarted: false,
@@ -680,7 +644,7 @@
                 '#press-room': [{sender:'Press Sec', text:'Do not talk to CNN.', time:'8:54 AM'}],
                 '@Sarah': { history:[{sender:'Dir. Cyber Sarah', text:'Revert the commit in GitHub!', time:'8:56 AM'}], options:[{text:"Working on it.", reply:"Hurry up."}] },
                 '@Dave(Sales)': { history:[{sender:'Dave (Sales)', text:'Bro my leads are freaking out, is the system actually wiped?', time:'8:57 AM'}], options:[{text:"It's gone, Dave.", reply:"Oh my god. I'm selling my stock."}, {text:"Just a glitch.", reply:"I'll believe it when I see it."}] },
-                '@Gen_Mark': { history:[{sender:'Gen. Mark', text:'Give me the word and we move on the server farms. Tell me.', time:'8:58 AM'}], options:[{text:"Stand down.", reply:"Copy that."}, {text:"Move in.", reply:"Troops deployed. God help us."}] }
+                '@Gen_Mark': { history:[{sender:'Gen. Mark', text:'Give me the word and we move on the server farms.', time:'8:58 AM'}], options:[{text:"Stand down.", reply:"Copy that."}, {text:"Move in.", reply:"Troops deployed."}] }
             },
 
             // TWITTER
@@ -690,6 +654,7 @@
                 {n:'The New York Times', h:'@nytimes', v:true, a:'https://upload.wikimedia.org/wikipedia/commons/4/40/New_York_Times_logo_variation.jpg', banner:'https://images.unsplash.com/photo-1504711434969-e33886168f5c', bio:'All the news that\'s fit to print.', f:55000000, isFollowed:false},
                 {n:'CryptoBro', h:'@coinz4dayz', v:false, a:'https://i.pravatar.cc/150?u=cb', bio:'To the moon.', f:12000, isFollowed:false},
                 {n:'AngryCitizen', h:'@citizen99', v:false, a:'https://i.pravatar.cc/150?u=ac', bio:'Just a guy.', f:42, isFollowed:false},
+                {n:'SarahCodes', h:'@SarahCodes', v:false, a:'https://i.pravatar.cc/150?u=sc', bio:'Cyber Div.', f:1000, isFollowed:false},
                 {n:'Mayor Adams', h:'@NYCMayor', v:true, a:'https://i.pravatar.cc/150?u=mayor', banner:'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9', bio:'Mayor of NYC.', f:2000000, isFollowed:false},
                 {n:'Governor CA', h:'@GovCA', v:true, a:'https://i.pravatar.cc/150?u=gov', banner:'https://images.unsplash.com/photo-1449034446853-66c86144b0ad', bio:'Official.', f:4500000, isFollowed:false},
                 {n:'FBI', h:'@FBI', v:true, a:'https://upload.wikimedia.org/wikipedia/commons/d/da/Seal_of_the_Federal_Bureau_of_Investigation.svg', banner:'https://images.unsplash.com/photo-1589829085413-56de8ae18c73', bio:'Federal Bureau of Investigation.', f:3500000, isFollowed:false}
@@ -698,7 +663,7 @@
                 { id:1, name:'CNN Politics', handle:'@CNNPolitics', avatar:'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', verified:true, time:'2m', text:'BREAKING: Massive data wipe in the federal government. #FedLeak', image:null, likes:12400, rts:4500, replies:[] },
                 { id:2, name:'The New York Times', handle:'@nytimes', avatar:'https://upload.wikimedia.org/wikipedia/commons/4/40/New_York_Times_logo_variation.jpg', verified:true, time:'5m', text:'Millions of citizens report losing access to the Fed-Link portal.', image:null, likes:8900, rts:3100, replies:[] }
             ],
-            twPool: [{u:0, text:'Sources say emergency subpoena at 9:00 AM.'}, {u:2, text:'Dollar dropping fast. 📉'}, {u:4, text:'NYC services are offline. We demand answers from the federal government. #FedLeak'}, {u:6, text:'The FBI is actively investigating the GovCloud breach. Submit tips to IC3.gov.'}, {u:5, text:'Deploying National Guard to secure key data centers in California.'}],
+            twPool: [{u:0, text:'Sources say emergency subpoena at 9:00 AM.'}, {u:2, text:'Dollar dropping fast. 📉'}, {u:5, text:'NYC services are offline. We demand answers from the federal government. #FedLeak'}, {u:7, text:'The FBI is actively investigating the GovCloud breach. Submit tips to IC3.gov.'}, {u:6, text:'Deploying National Guard to secure key data centers in California.'}],
 
             torPool: ["User44: I bid 2 BTC for the DB.", "NullSec: Waiting for the drop.", "Admin: Auction closes in 3 mins.", "CyberPunk: This leak is massive."],
 
@@ -706,13 +671,12 @@
                 try {
                     if(this.gameStarted) return; this.gameStarted = true;
                     let mm = document.getElementById('main-menu'); if(mm) mm.style.display = 'none';
-                    audio.init(); audio.heartbeat();
                     
-                    try{ this.renderEmails(); }catch(e){}
-                    try{ this.renderSlack(); }catch(e){}
-                    try{ this.renderMarket(); }catch(e){}
-                    try{ this.renderTweets(); }catch(e){}
-                    try{ this.renderCisa(); }catch(e){}
+                    try { this.renderEmails(); } catch(e){}
+                    try { this.renderSlack(); } catch(e){}
+                    try { this.renderMarket(); } catch(e){}
+                    try { this.renderCisa(); } catch(e){}
+                    try { this.renderTweets(); } catch(e){}
                     
                     this.startClocks();
                     this.toast("GovOS Initialized. Critical Errors Detected.");
@@ -722,7 +686,7 @@
             // --- CHROME ROUTER ---
             switchChromeTab(id) {
                 try {
-                    if(this.lockedTab) { this.toast("Tab locked by 2FA failure."); audio.error(); return; }
+                    if(this.lockedTab) { this.toast("Tab locked by 2FA failure."); return; }
                     this.activeChromeTab = id;
                     
                     document.querySelectorAll('.chrome-tab').forEach(t=>t.classList.remove('active'));
@@ -731,16 +695,16 @@
                     document.querySelectorAll('.browser-content').forEach(c=>c.style.display='none');
                     let bc = document.getElementById('browser-'+id); if(bc) bc.style.display='flex';
                     
-                    if(id === 'workspace') { this.switchApp('mail'); this.switchGmailView('inbox'); }
+                    if(id === 'workspace') { this.navToGmail('inbox'); }
                     if(id === 'twitter') { this.switchTwView('home'); }
                     if(id === 'terminal' || id === 'aws') setTimeout(()=> { let ti = document.getElementById('term-input'); if(ti) ti.focus(); }, 100);
                     
-                    let b = document.getElementById('chrome-badge-'+(id==='workspace'?'mail':id)); if(b) b.style.display = 'none';
+                    let badgeId = 'chrome-badge-' + (id === 'workspace' ? 'mail' : id);
+                    let b = document.getElementById(badgeId); if(b) b.style.display = 'none';
                 } catch(e) { console.error(e); }
             },
 
             toast(msg) {
-                if(this.settingsMute) return;
                 const tc = document.getElementById('os-toast-container');
                 if(tc) {
                     let t = document.createElement('div'); t.className = 'os-toast';
@@ -760,7 +724,7 @@
                 if(this.stress >= 100) this.evaluateEnding("BURNOUT");
             },
 
-            // --- BACKGROUND ENGINES ---
+            // --- BACKGROUND ENGINES (TRY/CATCH WRAPPED) ---
             startClocks() {
                 try {
                     let globalTicks = 0;
@@ -776,7 +740,7 @@
                             if(this.cybrOwned > 0 && globalTicks >= 40 && !this.cybrPumped) {
                                 this.cybrPumped = true; this.cybrPrice = 450.00;
                                 this.balance += this.cybrOwned * 45000; this.updateStats();
-                                this.toast("CYBERDYNE CONTRACT ANNOUNCED. CYBR +1000%."); audio.error();
+                                this.toast("CYBERDYNE CONTRACT ANNOUNCED. CYBR +1000%."); 
                                 let cp = document.getElementById('cybr-price-ui'); if(cp) { cp.innerText = "$450.00"; cp.style.color = "var(--primary)"; }
                             }
                             if(globalTicks === 35) this.triggerHackerChat();
@@ -786,7 +750,7 @@
 
                     setInterval(() => {
                         try {
-                            if(this.emailDirty && this.activeChromeTab === 'workspace' && this.currentApp === 'mail' && this.activeGmailView === 'list') {
+                            if(this.emailDirty && this.activeChromeTab === 'workspace' && this.activeGmailView === 'list') {
                                 this.renderEmails(); this.emailDirty = false;
                             }
                         } catch(e) {}
@@ -799,13 +763,12 @@
                             
                             this.emails.unshift({ id: this.emailCounter++, tab: nE.t || nE.tab, read: false, sender: nE.s || nE.sender, subject: nE.sub || nE.subject, snippet: nE.b ? nE.b.substring(0,20)+'...' : nE.body.substring(0,20)+'...', body: nE.b || nE.body });
                             this.emailDirty = true;
-                            this.toast(`New email from ${nE.s || nE.sender}`); audio.gmail();
+                            this.toast(`New email from ${nE.s || nE.sender}`);
                             
-                            if((nE.t || nE.tab) === 'primary' && (this.activeChromeTab !== 'workspace' || this.currentApp !== 'mail' || this.activeGmailTab !== 'primary')) { 
+                            if((nE.t || nE.tab) === 'primary' && (this.activeChromeTab !== 'workspace' || this.activeGmailTab !== 'primary')) { 
                                 let cb = document.getElementById('chrome-badge-mail'); if(cb) cb.style.display = 'inline-block';
                                 let ib = document.getElementById('inbox-badge'); if(ib) ib.style.display = 'inline-block'; 
                             }
-                            
                             if((nE.sub || nE.subject).includes('Review Press Release')) { this.unlockDoc('pr', 'Press_Draft.pdf', 'campaign', '#fbbc04', 'Redact Immediately'); }
                             if((nE.sub || nE.subject).includes('Martial Law')) { this.unlockDoc('ml', 'Martial_Law.pdf', 'security', 'var(--urgent)', 'Signature Required'); }
                             if((nE.sub || nE.subject).includes('AWS Billing')) { this.spawnAwsBill(); }
@@ -818,7 +781,6 @@
                             if(Math.random()>0.6){
                                 const ch = ['#general', '#cyber-division', '#press-room'][Math.floor(Math.random()*3)];
                                 this.slackData[ch].push({sender:['Dave','Intern','Staff','Analyst'][Math.floor(Math.random()*4)], text:['Has anyone seen CNN?','Is the president resigning?','We are so screwed.','Do not comment on Twitter.'][Math.floor(Math.random()*4)], time:'Live'}); 
-                                audio.slack(); 
                                 if(this.activeChromeTab === 'slack') this.renderSlack();
                                 else { let sb=document.getElementById('chrome-badge-slack'); if(sb) sb.style.display='inline-block'; }
                             }
@@ -870,7 +832,7 @@
                                 else { const gen = ["GovCloud is a joke.", "Imagine losing 5,000 accounts.", "Puts on the US Economy.", "Who is the Sec of Tech?"]; twText = gen[Math.floor(Math.random()*gen.length)]; user = this.twUsers[Math.floor(Math.random()*this.twUsers.length)]; }
                                 
                                 let newT = { id: this.tweetCounter++, name: user.n, handle: user.h, avatar: user.a, verified: user.v, time: '1s', text: twText, image:null, likes: 0, rts: 0, replies: [] };
-                                this.tweets.unshift(newT); audio.tweet(); 
+                                this.tweets.unshift(newT);
                                 
                                 if(this.activeChromeTab === 'twitter' && this.activeTwView === 'home') {
                                     let tl = document.getElementById('tw-timeline');
@@ -885,9 +847,10 @@
 
                     setTimeout(() => this.trigger2FA(), 25000);
                     setTimeout(() => this.triggerPhone(), 110000);
-                } catch(e) { console.error("Engine init failure:", e); }
+                } catch(e) { console.error("Engine failure:", e); }
             },
 
+            // --- TICKER ---
             updateTicker() {
                 try {
                     let nt = document.getElementById('news-ticker-text'); if(!nt) return;
@@ -899,11 +862,22 @@
                 } catch(e) {}
             },
 
-            // --- EVENTS ---
+            // --- CISA ---
+            renderCisa() {
+                try {
+                    const c = document.getElementById('cisa-grid-container'); if(!c) return;
+                    c.innerHTML='';
+                    for(let i=0;i<10;i++) {
+                        c.innerHTML += `<div class="cisa-node" id="cisa-node-${i}" onclick="this.classList.remove('attacked'); this.style.background='#188038'; game.stress-=1; game.updateStats();">NODE ${i}</div>`;
+                    }
+                } catch(e) {}
+            },
+
+            // --- EVENTS & HACKER CHAT ---
             hackerState: 0,
             triggerHackerChat() {
                 let ov = document.getElementById('overlay-hacker'); if(ov) ov.style.display = 'flex';
-                audio.error(); this.nextHackerChat();
+                this.nextHackerChat();
             },
             nextHackerChat() {
                 let cl = document.getElementById('hacker-chat-log'); let ho = document.getElementById('hacker-options');
@@ -928,7 +902,7 @@
                         let o=document.getElementById('overlay-hacker'); if(o) o.style.display='none'; 
                         this.leakedToPress = true; this.stress += 40; this.updateStats();
                         this.tweets.unshift({ id: this.tweetCounter++, name: 'CNN Politics', handle: '@CNNPolitics', avatar: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', verified: true, time: '1s', text: '🚨 BREAKING EXCLUSIVE: We have just received a 50GB cache of classified Fed-Link data. A massive government cover-up is unraveling. #FedLeak', image: null, likes: 98000, rts: 45000, replies: [] });
-                        this.toast("CRITICAL: CNN JUST POSTED THE LEAK."); audio.tweet(); let tb=document.getElementById('chrome-badge-tw'); if(tb) tb.style.display='inline-block';
+                        this.toast("CRITICAL: CNN JUST POSTED THE LEAK."); let tb=document.getElementById('chrome-badge-tw'); if(tb) tb.style.display='inline-block';
                     }, 2000);
                 }
                 cl.scrollTop = cl.scrollHeight;
@@ -945,6 +919,7 @@
                 setTimeout(()=>this.nextHackerChat(), 1000);
             },
 
+            // --- HIRING ARC ---
             fireIntern() {
                 try {
                     if (this.firedIntern) return;
@@ -963,7 +938,7 @@
                         this.unlockDoc('app_alex', 'App_Alex.pdf', 'person', 'var(--text-main)', 'Review Applicant');
                         this.unlockDoc('app_jordan', 'App_Jordan.pdf', 'person', 'var(--text-main)', 'Review Applicant');
                         this.emailDirty = true;
-                        this.toast("New Applicants received."); audio.gmail();
+                        this.toast("New Applicants received.");
                     }, 10000);
                     
                     setTimeout(() => { this.triggerLawsuit(); }, 25000);
@@ -976,11 +951,11 @@
                     if(hrRow) hrRow.innerHTML = `<td style="padding:12px; font-weight:bold; color:green;">${name}</td><td style="padding:12px;">Software Intern</td><td style="padding:12px;"><button class="btn-outline" disabled>HIRED</button></td>`;
                     
                     if(name === 'Alex Vance') {
-                        setTimeout(()=> { this.balance -= 50000; this.updateStats(); this.toast("Alex Vance stole $50,000 from OceanBank!"); audio.error(); }, 15000);
+                        setTimeout(()=> { this.balance -= 50000; this.updateStats(); this.toast("Alex Vance stole $50,000 from OceanBank!"); }, 15000);
                     } else {
                         this.stress -= 20; this.updateStats();
                     }
-                    this.switchGmailView('docs');
+                    this.navToGmail('docs');
                 } catch(e) { console.error(e); }
             },
             triggerLawsuit() {
@@ -993,7 +968,7 @@
                     let ov = document.getElementById('overlay-lawsuit');
                     if(ov) {
                         let lt = document.getElementById('lawsuit-text'); if(lt) lt.innerText = msg;
-                        ov.style.display = 'flex'; audio.error();
+                        ov.style.display = 'flex';
                     }
 
                     if (!win) {
@@ -1011,10 +986,11 @@
                     }
                 } catch(e) { console.error(e); }
             },
+
             trigger2FA() {
                 const ov = document.getElementById('overlay-2fa'); const code = Math.floor(100000 + Math.random() * 900000);
                 let cd = document.getElementById('fa-code-disp'); if(cd) cd.innerText = code; 
-                if(ov) ov.style.display = 'flex'; audio.error();
+                if(ov) ov.style.display = 'flex';
                 let t = 10; 
                 let fi = document.getElementById('fa-input'); if(fi) { fi.value=''; fi.focus(); }
                 let int = setInterval(() => {
@@ -1022,12 +998,6 @@
                     if(fi && fi.value == code) { clearInterval(int); if(ov) ov.style.display='none'; this.toast("Identity Verified."); }
                     else if (t <= 0) { clearInterval(int); if(ov) ov.style.display='none'; this.lockedTab = true; this.toast("2FA FAILED. System Locked for 10s."); setTimeout(()=>this.lockedTab=false, 10000); }
                 }, 1000);
-            },
-            handlePhone(accept) {
-                let ov = document.getElementById('overlay-phone'); if(ov) ov.style.display='none';
-                if(accept) { this.stress+=40; this.timeSeconds-=60; this.toast("POTUS yelled at you. Gained 1 min."); }
-                else { this.stress+=10; this.toast("Declined POTUS. Slightly concerning."); }
-                this.updateStats();
             },
             spawnAwsBill() {
                 if(this.awsBillActive) return; this.awsBillActive = true; this.awsPaid = false;
@@ -1048,7 +1018,7 @@
                     if(t <= 0) {
                         clearInterval(this.awsInterval);
                         this.balance -= 50400; this.updateStats();
-                        this.toast("AWS Auto-Deducted $50,400 (inc. 20% late fee)"); audio.error();
+                        this.toast("AWS Auto-Deducted $50,400 (inc. 20% late fee)");
                         let aib = document.getElementById('aws-invoice-block'); if(aib) aib.remove();
                     }
                 }, 1000);
@@ -1060,62 +1030,47 @@
                     this.toast("AWS Invoice Paid.");
                 } else { this.toast("Insufficient funds to pay AWS."); }
             },
-            sellCodes() { this.balance += 15000; this.stress += 15; this.updateStats(); this.toast("Codes Sold. +$15,000"); audio.error(); },
+
+            // --- TOR ECONOMY ---
+            sellCodes() { this.balance += 15000; this.stress += 15; this.updateStats(); this.toast("Codes Sold. +$15,000"); },
             buyIdentity() { if(this.balance >= 30000) { this.balance -= 30000; this.stress -= 30; this.updateStats(); this.toast("Identity Purged. -30% Stress"); } else this.toast("Insufficient Funds."); },
             buyIsland() { if(this.balance >= 2500000) { this.evaluateEnding("ISLAND"); } else this.toast("Insufficient Funds."); },
 
-            // --- 1. GMAIL ---
-            switchApp(app) {
+            // --- 1. GMAIL ROUTING (FLAWLESS) ---
+            navToGmail(viewStr) {
                 try {
-                    this.currentApp = app; 
-                    document.querySelectorAll('.gm-nav-item').forEach(n=>n.classList.remove('active'));
+                    this.activeGmailView = (viewStr === 'inbox' || viewStr === 'sent' || viewStr === 'promotions' || viewStr === 'primary') ? 'list' : (viewStr === 'docs' ? 'docs' : 'detail');
+                    
                     ['gmail-list-view', 'gmail-detail-view', 'docs-list-view', 'doc-detail-view'].forEach(id => { let el = document.getElementById(id); if(el) el.style.display = 'none'; });
+                    document.querySelectorAll('.gm-nav-item').forEach(n=>n.classList.remove('active'));
 
-                    if(app === 'mail') {
-                        let nav = document.getElementById('nav-mail'); if(nav) nav.classList.add('active');
+                    if(viewStr === 'inbox' || viewStr === 'sent' || viewStr === 'promotions' || viewStr === 'primary') {
+                        let isSent = (viewStr === 'sent');
+                        let nav = document.getElementById(isSent ? 'nav-sent' : 'nav-mail'); if(nav) nav.classList.add('active');
                         let glv = document.getElementById('gmail-list-view'); if(glv) glv.style.display = 'flex';
-                        this.switchGmailTab('primary');
-                    } else if(app === 'docs') {
+                        
+                        let mh = document.getElementById('mail-tabs-header');
+                        if(isSent) {
+                            this.activeGmailTab = 'sent';
+                            if(mh) mh.style.display = 'none';
+                        } else {
+                            if(mh) mh.style.display = 'flex';
+                            this.activeGmailTab = (viewStr === 'inbox') ? 'primary' : viewStr;
+                            document.querySelectorAll('#mail-tabs-header .chrome-tab').forEach(t=>{ t.classList.remove('active'); t.style.borderBottom='none'; t.style.color='var(--text-main)';});
+                            let tb = document.getElementById('tab-' + this.activeGmailTab);
+                            if(tb) { tb.classList.add('active'); tb.style.borderBottom='3px solid var(--primary)'; tb.style.color='var(--primary)'; }
+                            let ib = document.getElementById('inbox-badge'); if(ib) ib.style.display = 'none';
+                        }
+                        this.renderEmails();
+                    }
+                    else if (viewStr === 'docs') {
                         let nav = document.getElementById('nav-docs'); if(nav) nav.classList.add('active');
                         let dlv = document.getElementById('docs-list-view'); if(dlv) dlv.style.display = 'flex';
                         this.renderDocs();
                     }
                 } catch(e) { console.error(e); }
             },
-            switchGmailView(view) {
-                try {
-                    this.activeGmailView = view;
-                    document.querySelectorAll('.gm-nav-item').forEach(n=>n.classList.remove('active'));
-                    ['gmail-list-view', 'gmail-detail-view', 'docs-list-view', 'doc-detail-view'].forEach(id => { let el = document.getElementById(id); if(el) el.style.display = 'none'; });
-
-                    if(view === 'inbox' || view === 'sent') {
-                        let nav = document.getElementById(view === 'sent' ? 'nav-sent' : 'nav-mail'); if(nav) nav.classList.add('active');
-                        let glv = document.getElementById('gmail-list-view'); if(glv) glv.style.display = 'flex';
-                        
-                        let mh = document.getElementById('mail-tabs-header');
-                        if(view === 'sent') { 
-                            this.activeGmailTab = 'sent'; if(mh) mh.style.display = 'none'; 
-                        } else { 
-                            if(mh) mh.style.display = 'flex'; 
-                            let ib = document.getElementById('inbox-badge'); if(ib) ib.style.display = 'none';
-                            this.filterMail('primary');
-                        }
-                        this.renderEmails();
-                    } 
-                    else if (view === 'docs') {
-                        let nav = document.getElementById('nav-docs'); if(nav) nav.classList.add('active');
-                        let dlv = document.getElementById('docs-list-view'); if(dlv) dlv.style.display = 'flex';
-                        this.renderDocs();
-                    }
-                } catch(e) { console.log(e); }
-            },
-            filterMail(tab) { 
-                this.activeGmailTab = tab;
-                document.querySelectorAll('#mail-tabs-header .chrome-tab').forEach(t=>{ t.classList.remove('active'); t.style.borderBottom='none'; t.style.color='var(--text-main)';});
-                let tb = event.currentTarget || document.getElementById(`tab-${tab}`);
-                if(tb) { tb.classList.add('active'); tb.style.borderBottom='3px solid var(--primary)'; tb.style.color='var(--primary)'; }
-                this.renderEmails(); 
-            },
+            filterMail(tab) { this.navToGmail(tab); },
             generateEmailHTML(e) {
                 let color = e.read ? '#dadce0' : '#1a73e8';
                 return `<div class="email-row ${e.read ? '' : 'unread'}" onclick="game.openEmail(${e.id})">
@@ -1125,20 +1080,24 @@
                         </div>`;
             },
             renderEmails() {
-                const c = document.getElementById('email-list-container'); if(!c) return;
-                c.innerHTML='';
-                let filtered = this.emails.filter(e => e.tab === this.activeGmailTab);
-                if (filtered.length === 0) c.innerHTML = `<div style="padding:40px; text-align:center; color:#999; font-size:16px;">No messages.</div>`;
-                filtered.forEach(e => c.innerHTML += this.generateEmailHTML(e));
+                try {
+                    const c = document.getElementById('email-list-container'); if(!c) return;
+                    c.innerHTML='';
+                    let filtered = this.emails.filter(e => e.tab === this.activeGmailTab);
+                    if (filtered.length === 0) c.innerHTML = `<div style="padding:40px; text-align:center; color:#999; font-size:16px;">No messages.</div>`;
+                    filtered.forEach(e => c.innerHTML += this.generateEmailHTML(e));
+                } catch(e) {}
             },
             searchGmail() {
-                let text = document.getElementById('search-input').value.toLowerCase();
-                const c = document.getElementById('email-list-container'); if(!c) return;
-                c.innerHTML = '';
-                this.emails.filter(e => e.subject.toLowerCase().includes(text) || e.sender.toLowerCase().includes(text)).forEach(e => {
-                    c.innerHTML += this.generateEmailHTML(e);
-                });
-                if(this.activeGmailView !== 'list') this.switchGmailView('inbox');
+                try {
+                    let text = document.getElementById('search-input').value.toLowerCase();
+                    const c = document.getElementById('email-list-container'); if(!c) return;
+                    c.innerHTML = '';
+                    this.emails.filter(e => e.subject.toLowerCase().includes(text) || e.sender.toLowerCase().includes(text)).forEach(e => {
+                        c.innerHTML += this.generateEmailHTML(e);
+                    });
+                    if(this.activeGmailView !== 'list') this.navToGmail('inbox');
+                } catch(e) {}
             },
             openEmail(id) {
                 try {
@@ -1198,7 +1157,7 @@
                     
                     if(type === 'pr' && (!d || !d.signed)) {
                         let ov = document.getElementById('overlay-redliner'); if(ov) ov.style.display='flex'; 
-                        audio.slack();
+                        
                         this.redlineTime = 45; this.redlineActive = true;
                         if(this.redlinerInterval) clearInterval(this.redlinerInterval);
                         this.redlinerInterval = setInterval(() => {
@@ -1210,7 +1169,7 @@
                                 if(document.querySelectorAll('.redact:not(.redacted)').length > 0) { this.stress+=30; this.updateStats(); this.toast("PR Disaster! CNN received unredacted draft."); }
                             }
                         }, 1000);
-                        this.switchGmailView('docs'); 
+                        this.navToGmail('docs'); 
                     } else if(type === 'arch') {
                         let dt = document.getElementById('doc-title-view'); if(dt) dt.innerText = 'FedCloud_Architecture.pdf';
                         let db = document.getElementById('doc-body-view'); if(db) db.innerHTML = `<div style="text-align:center; margin-bottom:30px;"><span class="material-icons" style="font-size:64px; color:var(--primary);">account_tree</span><h2 style="margin:10px 0;">FEDCLOUD ARCHITECTURE V4</h2></div><p><b>Emergency Restoration:</b> To restore data, revert the commit in GitHub, find the Hacker IP in the Terminal (type 'cat access.log'), report the IP to the FBI via IC3, and type in the terminal: <br><br><b>sudo systemctl restart mongod</b></p>`;
@@ -1233,7 +1192,7 @@
                     this.stress-=10; this.updateStats(); this.toast("Press statement saved.");
                     let d = this.unlockedDocs.find(x => x.id === 'pr'); if(d) d.signed = true;
                     let ov = document.getElementById('overlay-redliner'); if(ov) ov.style.display='none';
-                    this.switchGmailView('docs');
+                    this.navToGmail('docs');
                 }
             },
             signDoc(type) {
@@ -1245,7 +1204,7 @@
                         if(type==='fine') this.balance -= 10000;
                         if(type==='nda') this.docSigned = true;
                         if(type==='sub') this.subSigned = true;
-                        this.updateDocsBadge(); this.switchGmailView('docs');
+                        this.updateDocsBadge(); this.navToGmail('docs');
                     },1500); 
                 }
             },
@@ -1292,35 +1251,8 @@
                         let idMap = {'@Sarah':'sl-badge-sarah', '@Dave(Sales)':'sl-badge-dave', '@Gen_Mark':'sl-badge-genmark'};
                         let sb = document.getElementById(idMap[chan]); if(sb) sb.style.display = 'inline-block'; 
                         let gb = document.getElementById('chrome-badge-slack'); if(gb) gb.style.display = 'inline-block';
-                        audio.slack(); 
                     }
                 }, 2000);
-            },
-
-            // --- 3. TERMINAL ---
-            handleTermCmd(cmd) {
-                const out = document.getElementById('term-output'); if(!out) return;
-                out.innerHTML += `<div class="term-line"><span style="font-weight:bold; margin-right:12px;">root@cluster4:~#</span> ${cmd}</div>`;
-                let c = cmd.toLowerCase().trim(); let target = 'sudo systemctl restart mongod'; let res = "";
-                
-                if(c === 'clear') { out.innerHTML = ''; return; }
-                else if(c === 'ls') res = "drwxr-xr-x  logs/\ndrwxr-xr-x  bin/\n-rw-r--r--  db_config.json";
-                else if(c === 'cd logs') res = "Directory changed. Type 'ls' to view.";
-                else if(c === 'ls logs') res = "-rw-r--r--  access.log";
-                else if(c === 'cat access.log' || c === 'tail access.log' || c === 'cat logs/access.log') {
-                    for(let i=0; i<15; i++) res += `[INFO] GET /api/v1/auth 200 OK - IP: 192.168.1.${Math.floor(Math.random()*255)}\n`;
-                    res += `[CRITICAL] UNAUTHORIZED_ACCESS - PAYLOAD: FORCE_PURGE - SOURCE_IP: <span style="color:red; font-weight:bold; background:#fff; padding:0 4px;">${this.hackerIP}</span>\n`;
-                }
-                else if(target.startsWith(c) && c !== target && c.length > 5) { this.stress+=2; this.updateStats(); audio.error(); res = `<span style="color:red; background:#fff; padding:0 4px;">Typo detected. Stress +2%</span>`; }
-                else if(c === target) {
-                    if(this.hasReverted) { res = "SUCCESS: MongoDB service restarted. Data restored from backup block."; this.dbFixed = true; this.log("Database restored.", "green"); this.stress -= 50; this.updateStats(); } 
-                    else { res = "FAILED: Bad commit detected in core repository. Revert commit in FedRepo before restarting."; this.stress += 5; this.updateStats(); audio.error(); }
-                }
-                else if(c === 'help') res = "Commands: ls, cd, cat, sudo systemctl restart mongod, clear";
-                else res = `bash: ${cmd}: command not found`;
-
-                if(res) out.innerHTML += `<div style="margin-bottom:6px; color:#aaa; white-space:pre-wrap; line-height:1.4;">${res}</div>`;
-                out.scrollTop = out.scrollHeight;
             },
 
             // --- 4. GIT ---
@@ -1334,14 +1266,14 @@
                 let gaa = document.getElementById('git-action-area'); if(gaa) gaa.innerHTML = `<span style="color:#3fb950; font-weight:bold;">Reverted Successfully</span>`;
                 let gcb = document.getElementById('git-code-block'); if(gcb) gcb.innerHTML = `<span style="color:#ff7b72;">function</span> <span style="color:#d2a8ff;">executePurge</span>(targets, options) {\n    <span style="color:#ff7b72;">if</span> (!targets) <span style="color:#ff7b72;">return</span> false;\n    <span style="color:#ff7b72;">if</span> (!options.safeMode) <span style="color:#ff7b72;">throw new Error</span>(<span style="color:#a5d6ff;">"Hard purge blocked"</span>);\n    db.collection(<span style="color:#a5d6ff;">'citizens'</span>).deleteMany(targets);\n    <span style="color:#ff7b72;">return</span> true;\n}`;
                 this.slackData['@Sarah'].history.push({sender: 'Dir. Cyber Sarah', text: 'I see the revert! Okay, go to the GovCloud terminal and type `sudo systemctl restart mongod` to bring it back online!', time:'Now'});
-                let sb = document.getElementById('chrome-badge-slack'); if(sb) sb.style.display = 'inline-block'; audio.slack();
+                let sb = document.getElementById('chrome-badge-slack'); if(sb) sb.style.display = 'inline-block'; 
                 let ogp = document.getElementById('overlay-git-pr'); if(ogp) ogp.style.display='none';
             },
 
             // --- 5. MARKET ---
             switchMarketRange(r) {
                 document.querySelectorAll('.mkt-filter').forEach(f=>f.classList.remove('active'));
-                if(event.currentTarget) event.currentTarget.classList.add('active');
+                let btn = document.getElementById('mkt-btn-'+r); if(btn) btn.classList.add('active');
                 this.stockHistory = [];
                 for(let i=0;i<25;i++) this.stockHistory.push(this.stockPrice + (Math.random()*200 - 100));
                 this.renderMarket();
@@ -1401,11 +1333,11 @@
                     
                     if(to === 'LEAKER_0X881' || to === 'LEAKER') {
                         if(amt < 50000) {
-                            this.toast("Leaker angry! CNN leaked data!"); audio.gmail();
+                            this.toast("Leaker angry! CNN leaked data!");
                             setTimeout(() => {
                                 this.leakedToPress = true; this.stress += 40; this.updateStats();
                                 this.tweets.unshift({ id: this.tweetCounter++, name: 'CNN Politics', handle: '@CNNPolitics', avatar: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', verified: true, time: '1s', text: '🚨 BREAKING EXCLUSIVE: We have just received a 50GB cache of classified Fed-Link data. A massive government cover-up is unraveling. #FedLeak', image: null, likes: 98000, rts: 45000, replies: [] });
-                                this.toast("CRITICAL: CNN JUST POSTED THE LEAK."); audio.tweet(); let tb=document.getElementById('chrome-badge-tw'); if(tb) tb.style.display='inline-block';
+                                this.toast("CRITICAL: CNN JUST POSTED THE LEAK."); let tb=document.getElementById('chrome-badge-tw'); if(tb) tb.style.display='inline-block';
                                 if(this.activeChromeTab === 'twitter' && this.activeTwView === 'home') this.renderTweets();
                             }, 5000);
                         } else { this.toast("Extortion paid."); this.stress -= 30; this.updateStats(); }
@@ -1545,16 +1477,21 @@
                     }
                 }
             },
-            openProfile(handle) {
+            openProfile(handle, tab='posts') {
                 let u = this.twUsers.find(x => x.h === handle);
-                if(!u && handle === '@SecOfTech') u = {n:'Sec. of Technology', h:'@SecOfTech', v:true, a:'https://i.pravatar.cc/150?u=sec', banner:'https://images.unsplash.com/photo-1555026408-041496a750df', bio:'Official account. Securing America.', f:2100000, isFollowed:false};
+                if(!u && handle === '@SecOfTech') u = {n:'Sec. of Technology', h:'@SecOfTech', v:true, a:'https://i.pravatar.cc/150?u=sec', banner:'https://images.unsplash.com/photo-1555026408-041496a750df?auto=format&fit=crop&w=600&q=80', bio:'Official account.', f:2100000, isFollowed:false};
                 if(!u) return;
 
                 this.viewingProfile = handle;
                 this.switchTwView('profile');
                 let phn = document.getElementById('prof-header-name'); if(phn) phn.innerText = u.n;
                 
-                let userTweets = this.tweets.filter(t => t.handle === handle || t.name === u.n);
+                let userTweets = [];
+                if(tab === 'posts') {
+                    userTweets = this.tweets.filter(t => t.handle === handle);
+                } else {
+                    this.tweets.forEach(t => { if(t.replies.some(r => r.handle === handle)) userTweets.push(t); });
+                }
                 
                 let pc = document.getElementById('tw-profile-content');
                 if(pc) {
