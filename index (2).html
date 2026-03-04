@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BRAIN MYSTERY: NO HINTS</title>
+    <style>
+        :root {
+            --sky-top: #0ea5e9; --sky-bot: #38bdf8;
+            --grass: #22c55e; --glass: rgba(255, 255, 255, 0.2);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: linear-gradient(180deg, var(--sky-top), var(--sky-bot));
+            font-family: 'Avenir', 'Segoe UI', sans-serif;
+            overflow: hidden; touch-action: none;
+        }
+
+        /* --- THE WORLD --- */
+        #world { position: absolute; width: 100%; height: 100%; overflow: hidden; }
+        
+        #sun { 
+            position: absolute; top: 40px; right: 40px; width: 80px; height: 80px; 
+            background: #fbbf24; border-radius: 50%; border: 5px solid #fff;
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.5);
+            display: flex; align-items: center; justify-content: center; font-size: 2rem;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .cloud {
+            position: absolute; background: white; border-radius: 50px;
+            height: 35px; width: 100px; opacity: 0.8;
+            filter: blur(2px); transition: 0.3s;
+        }
+
+        #ground {
+            position: absolute; bottom: -80px; width: 120%; left: -10%; height: 200px;
+            background: var(--grass); border-top: 10px solid #ffffff;
+            border-radius: 50% 50% 0 0; z-index: 5;
+        }
+
+        /* --- UI SYSTEM --- */
+        #ui { position: absolute; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+        
+        .header {
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            pointer-events: auto;
+        }
+
+        .glass-card {
+            background: var(--glass); backdrop-filter: blur(15px);
+            border-radius: 20px; border: 2px solid rgba(255,255,255,0.4);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); color: white;
+            font-weight: 800; pointer-events: auto;
+        }
+
+        #riddle-container {
+            width: 85%; padding: 20px; margin: 20px auto; text-align: center;
+            font-size: 1.4rem; letter-spacing: -0.5px;
+        }
+
+        /* --- THE CORE ITEM --- */
+        #stage-item {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 8rem; pointer-events: auto; cursor: pointer;
+            z-index: 8; text-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+
+        #sticker-book {
+            position: absolute; bottom: 30px; left: 5%; width: 90%;
+            height: 70px; display: flex; align-items: center; gap: 8px;
+            overflow-x: auto; padding: 10px; pointer-events: auto;
+        }
+        .slot {
+            min-width: 45px; height: 45px; background: rgba(255,255,255,0.2);
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.5);
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        }
+
+        /* --- PARTICLES --- */
+        .confetti {
+            position: absolute; width: 8px; height: 8px; pointer-events: none;
+            z-index: 100; border-radius: 2px;
+        }
+
+        #gate {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0ea5e9; z-index: 1000; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="gate" onclick="start()">
+        <div style="font-size: 5rem;">🤔</div>
+        <h1 style="margin-bottom: 5px;">BRAIN MYSTERY</h1>
+        <p style="opacity: 0.8;">Can you find the logic?</p>
+        <div class="glass-card" style="padding: 15px 30px; margin-top: 20px;">START</div>
+    </div>
+
+    <div id="world">
+        <div id="sun">☀️</div>
+        <div id="cloud-box"></div>
+        <div id="stage-item">🎁</div>
+        <div id="ground"></div>
+    </div>
+
+    <div id="ui">
+        <div class="header">
+            <div class="glass-card" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;" onclick="hint()">?</div>
+            <div class="glass-card" style="padding: 8px 20px;" id="lvl-tag">LEVEL 1</div>
+            <div class="glass-card" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">🏆</div>
+        </div>
+        
+        <div id="riddle-container" class="glass-card">...</div>
+
+        <div id="sticker-book" class="glass-card"></div>
+    </div>
+
+    <script>
+        const game = {
+            lvl: 1,
+            locked: false,
+            startT: Date.now(),
+            tiltX: 0, tiltY: 0,
+            accel: 0
+        };
+
+        const levels = [
+            { r: "The gift is locked.", i: "🎁", s: "💎", win: "click" },
+            { r: "The owl is sleeping.", i: "🦉", s: "🌙", win: "shake" },
+            { r: "Gravity is broken.", i: "⚽", s: "👟", win: "tilt-up" },
+            { r: "The level is wrong.", i: "❓", s: "🏅", win: "ui-tap" },
+            { r: "Be a statue.", i: "🗿", s: "🧠", win: "wait" },
+            { r: "Too much sun.", i: "☀️", s: "🥤", win: "sun-tap" },
+            { r: "It's dark in here.", i: "👽", s: "☁️", win: "facedown" },
+            { r: "The apple is heavy.", i: "🍎", s: "🌳", win: "flip" },
+            { r: "Dirty clouds.", i: "☁️", s: "🎈", win: "cloud-rub" },
+            { r: "One tap is not enough.", i: "🥚", s: "🐥", win: "triple-tap" }
+        ];
+
+        function start() {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission();
+            }
+            document.getElementById('gate').style.display = 'none';
+            initLevel();
+            setupLoop();
+        }
+
+        function initLevel() {
+            const data = levels[game.lvl - 1];
+            const item = document.getElementById('stage-item');
+            item.innerText = data.i;
+            item.style.transform = "translate(-50%, -50%) scale(1)";
+            document.getElementById('riddle-container').innerText = data.r;
+            document.getElementById('lvl-tag').innerText = "LEVEL " + game.lvl;
+            game.startT = Date.now();
+            
+            // Generate clouds
+            const cb = document.getElementById('cloud-box');
+            cb.innerHTML = '';
+            for(let i=0; i<3; i++) {
+                const c = document.createElement('div');
+                c.className = 'cloud';
+                c.style.top = (120 + i*50) + 'px';
+                c.style.left = (Math.random()*60) + '%';
+                c.onclick = () => { if(levels[game.lvl-1].win === "cloud-rub") win(); };
+                cb.appendChild(c);
+            }
+        }
+
+        function win() {
+            if(game.locked) return;
+            game.locked = true;
+            pop(window.innerWidth/2, window.innerHeight/2);
+            
+            const book = document.getElementById('sticker-book');
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.innerText = levels[game.lvl-1].s;
+            book.appendChild(slot);
+
+            if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
+
+            setTimeout(() => {
+                game.lvl++;
+                game.locked = false;
+                if(game.lvl > levels.length) {
+                    alert("GENIUS!");
+                    game.lvl = 1;
+                    book.innerHTML = '';
+                }
+                initLevel();
+            }, 1200);
+        }
+
+        // --- INTERACTION LOGIC ---
+        document.getElementById('stage-item').onclick = () => {
+            const goal = levels[game.lvl-1].win;
+            if(goal === "click") win();
+            
+            // Squash effect
+            const itm = document.getElementById('stage-item');
+            itm.style.transform = "translate(-50%, -50%) scale(0.8)";
+            setTimeout(() => itm.style.transform = "translate(-50%, -50%) scale(1.1)", 100);
+            setTimeout(() => itm.style.transform = "translate(-50%, -50%) scale(1)", 200);
+        };
+
+        // Triple Tap Logic
+        let tapCount = 0;
+        document.getElementById('stage-item').addEventListener('touchstart', () => {
+            if(levels[game.lvl-1].win === "triple-tap") {
+                tapCount++;
+                if(tapCount >= 3) { tapCount=0; win(); }
+            }
+        });
+
+        document.getElementById('lvl-tag').onclick = () => {
+            if(levels[game.lvl-1].win === "ui-tap") win();
+        };
+
+        document.getElementById('sun').onclick = () => {
+            if(levels[game.lvl-1].win === "sun-tap") {
+                document.getElementById('sun').innerText = "🌙";
+                win();
+            }
+        };
+
+        // --- SENSORS ---
+        window.addEventListener('deviceorientation', (e) => {
+            game.tiltX = e.gamma; // Left/Right
+            game.tiltY = e.beta;  // Front/Back
+            
+            const goal = levels[game.lvl-1].win;
+            if(goal === "tilt-up" && e.beta < -30) win();
+            if(goal === "facedown" && (e.beta > 170 || e.beta < -170)) win();
+            if(goal === "flip" && Math.abs(e.gamma) > 160) win();
+        });
+
+        window.addEventListener('devicemotion', (e) => {
+            const a = e.accelerationIncludingGravity;
+            const force = Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);
+            if(force > 30 && levels[game.lvl-1].win === "shake") win();
+            game.accel = force;
+        });
+
+        function setupLoop() {
+            function update() {
+                // Parallax ground
+                const g = document.getElementById('ground');
+                g.style.transform = `translateX(${game.tiltX * -1}px) rotate(${game.tiltX/10}deg)`;
+                
+                // Wait level
+                if(levels[game.lvl-1].win === "wait" && (Date.now() - game.startT) > 5000 && game.accel < 15) {
+                    win();
+                }
+
+                requestAnimationFrame(update);
+            }
+            update();
+        }
+
+        function pop(x, y) {
+            for(let i=0; i<15; i++) {
+                const p = document.createElement('div');
+                p.className = 'confetti';
+                p.style.left = x + 'px'; p.style.top = y + 'px';
+                p.style.background = `hsl(${Math.random()*360}, 100%, 50%)`;
+                document.body.appendChild(p);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 4 + Math.random() * 6;
+                let px = 0, py = 0;
+                
+                let life = 1;
+                function move() {
+                    life -= 0.02;
+                    px += Math.cos(angle) * speed;
+                    py += Math.sin(angle) * speed + (1 - life) * 5; // gravity
+                    p.style.transform = `translate(${px}px, ${py}px) rotate(${life*360}deg)`;
+                    p.style.opacity = life;
+                    if(life > 0) requestAnimationFrame(move);
+                    else p.remove();
+                }
+                move();
+            }
+        }
+
+        function hint() {
+            alert("The answer isn't a button. It's how you hold the world!");
+      
+        }
+        
+        
+
+
+    </script>
+</body>
+</html>
