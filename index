@@ -2,303 +2,1660 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRAIN MYSTERY: NO HINTS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FedOS | Executive Workspace</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        :root {
-            --sky-top: #0ea5e9; --sky-bot: #38bdf8;
-            --grass: #22c55e; --glass: rgba(255, 255, 255, 0.2);
+        /* --- GLOBAL VARIABLES --- */
+        :root { 
+            --bg:#fff; --text-main:#202124; --text-muted:#5f6368; --primary:#0b57d0; --urgent:#d93025; 
+            --gm-bg:#f2f6fc; --gm-hover:#e8eaed; 
+            --dc-bg:#313338; --dc-side:#2b2d31; --dc-hover:#3f4147; --dc-text:#dbdee1; --dc-hl:#5865F2;
+            --tw-bg:#000000; --tw-border:#2f3336; --tw-text:#e7e9ea; --tw-muted:#71767b; --tw-blue:#1d9bf0; --tw-hover:#080808;
+            --git-bg:#0d1117; --git-border:#30363d; --term-bg:#0c0c0c; --term-green:#00ff41; 
+            --mkt-bg:#000; --mkt-red:#ff5000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body, html { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: linear-gradient(180deg, var(--sky-top), var(--sky-bot));
-            font-family: 'Avenir', 'Segoe UI', sans-serif;
-            overflow: hidden; touch-action: none;
-        }
-
-        /* --- THE WORLD --- */
-        #world { position: absolute; width: 100%; height: 100%; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 14px; }
         
-        #sun { 
-            position: absolute; top: 40px; right: 40px; width: 80px; height: 80px; 
-            background: #fbbf24; border-radius: 50%; border: 5px solid #fff;
-            box-shadow: 0 0 40px rgba(251, 191, 36, 0.5);
-            display: flex; align-items: center; justify-content: center; font-size: 2rem;
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        /* CHROME TABS */
+        #chrome-tabs { background: #dee1e6; display: flex; padding: 8px 8px 0; gap: 4px; height: 40px; align-items: flex-end; border-bottom:1px solid #ccc; flex-shrink:0; overflow-x:auto; user-select:none;}
+        #chrome-tabs::-webkit-scrollbar { height: 0px; }
+        .chrome-tab { background: #dee1e6; border-radius: 8px 8px 0 0; padding: 8px 12px; font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer; color: #5f6368; min-width: 110px; height: 32px; transition: 0.2s; white-space: nowrap;}
+        .chrome-tab:hover { background: #f1f3f4; }
+        .chrome-tab.active { background: #fff; color: #202124; font-weight: bold; border-top:1px solid #ccc; border-left:1px solid #ccc; border-right:1px solid #ccc; border-bottom: 1px solid #fff; z-index:2; position:relative; margin-bottom:-1px;}
 
-        .cloud {
-            position: absolute; background: white; border-radius: 50px;
-            height: 35px; width: 100px; opacity: 0.8;
-            filter: blur(2px); transition: 0.3s;
-        }
-
-        #ground {
-            position: absolute; bottom: -80px; width: 120%; left: -10%; height: 200px;
-            background: var(--grass); border-top: 10px solid #ffffff;
-            border-radius: 50% 50% 0 0; z-index: 5;
-        }
-
-        /* --- UI SYSTEM --- */
-        #ui { position: absolute; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+        /* LAYOUT & HUD */
+        #main-layout { display: flex; flex-grow: 1; width: 100%; overflow: hidden; background:#fff;}
+        #apps-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; width:100%; }
+        .browser-content { display: none; flex-grow: 1; flex-direction: column; height: 100%; overflow: hidden; background: #fff; width:100%; animation: fadein 0.2s ease;}
         
-        .header {
-            padding: 20px; display: flex; justify-content: space-between; align-items: center;
-            pointer-events: auto;
-        }
+        .btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 24px; font-size: 14px; border-radius: 24px; cursor: pointer; font-weight: 500; transition: 0.2s; display:inline-flex; align-items:center; justify-content:center; gap:8px;}
+        .btn-primary:hover { background: #084298; box-shadow: 0 4px 12px rgba(11,87,208,0.3); transform:translateY(-1px);}
+        .badge { background: var(--urgent); color: #fff; border-radius: 12px; padding: 2px 6px; font-size: 10px; margin-left: auto; display: none; font-weight:bold;}
+        
+        /* NOTIFICATIONS */
+        #os-toast-container { position: fixed; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 99999; pointer-events: none;}
+        .os-toast { background: #fff; border-left: 4px solid var(--primary); color: #333; padding: 16px 20px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); width: 320px; display: flex; align-items: center; gap: 16px; animation: slideInRight 0.4s forwards; }
+        
+        .status-sidebar { width: 260px; border-left: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; gap: 16px; background:#fff; z-index:10; flex-shrink:0; overflow-y:auto; user-select:none;}
+        .stat-card { border: 1px solid var(--border); border-radius: 8px; padding: 16px; background:#fff; transition: 0.3s;}
+        .clock-display { font-size: 2.2rem; font-weight: bold; color: var(--text-main); margin-top: 4px; font-family:monospace; letter-spacing:-1px;}
+        .clock-pulse { animation: pulse 1s infinite; color: var(--urgent) !important; }
+        #log-area { flex-grow: 1; font-family: monospace; font-size: 11px; color: #666; overflow-y: auto; border: 1px solid var(--border); border-radius:8px; padding:8px; background:#fafafa; line-height:1.4;}
 
-        .glass-card {
-            background: var(--glass); backdrop-filter: blur(15px);
-            border-radius: 20px; border: 2px solid rgba(255,255,255,0.4);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1); color: white;
-            font-weight: 800; pointer-events: auto;
-        }
+        /* OVERLAYS */
+        .overlay { position:fixed !important; top:0 !important; left:0 !important; width:100vw !important; height:100vh !important; z-index:100000 !important; display:none; align-items:center; justify-content:center; flex-direction:column; background:rgba(0,0,0,0.85); color:#fff; backdrop-filter:blur(5px); user-select:none;}
+        .glass-box { background:#fff; color:#000; padding:40px; border-radius:12px; text-align:center; width:400px; box-shadow:0 10px 40px rgba(0,0,0,0.5); animation: popin 0.3s;}
+        .fa-input { font-size:32px; letter-spacing:12px; text-align:center; padding:15px; width:100%; border:2px solid #ccc; border-radius:8px; outline:none; font-family:monospace; margin:20px 0; transition: border-color 0.3s;}
+        .fa-input:focus { border-color: var(--primary); }
 
-        #riddle-container {
-            width: 85%; padding: 20px; margin: 20px auto; text-align: center;
-            font-size: 1.4rem; letter-spacing: -0.5px;
-        }
+        /* GMAIL */
+        .gm-nav-item { display: flex; align-items: center; gap: 16px; height: 32px; padding: 0 12px 0 24px; border-radius: 0 16px 16px 0; cursor: pointer; font-weight: 500; color:var(--text-main); font-size:14px; transition:0.2s; user-select:none;}
+        .gm-nav-item:hover { background: var(--gm-hover); }
+        .gm-nav-item.active { background: #d3e3fd; color: #041e49; font-weight:bold;}
+        .email-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f1f3f4; cursor: pointer; font-size:14px; transition:0.2s; background:#fff; animation: slideDown 0.3s ease; user-select:none;}
+        .email-row:hover { box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,.3); z-index: 10; position:relative;}
+        .email-row.unread { font-weight: bold; background: rgba(11,87,208,0.04); }
+        
+        .copyable-text { user-select: text !important; cursor: text !important; }
+        
+        .btn-outline { background: #fff; border: 1px solid var(--border); padding: 8px 16px; border-radius: 16px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; color:var(--text-muted); transition:0.2s; user-select:none;}
+        .btn-outline:hover { background: #f8f9fa; color:var(--text-main);}
 
-        /* --- THE CORE ITEM --- */
-        #stage-item {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 8rem; pointer-events: auto; cursor: pointer;
-            z-index: 8; text-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
-        }
+        /* SLACK */
+        .sl-channel { padding: 6px 12px; margin: 2px 8px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size:15px; color:#949ba4; transition:0.2s; user-select:none;}
+        .sl-channel:hover { background: var(--dc-hover); color:#dbdee1;}
+        .sl-channel.active { background: var(--dc-hl); color:#fff;}
+        .sl-msg { display: flex; gap: 16px; margin-bottom:16px; padding:4px 20px; animation: slideDown 0.3s ease;}
+        .sl-msg:hover { background:#2e3035; }
 
-        #sticker-book {
-            position: absolute; bottom: 30px; left: 5%; width: 90%;
-            height: 70px; display: flex; align-items: center; gap: 8px;
-            overflow-x: auto; padding: 10px; pointer-events: auto;
-        }
-        .slot {
-            min-width: 45px; height: 45px; background: rgba(255,255,255,0.2);
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.5);
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-        }
+        /* TWITTER */
+        .tw-nav-item { display: flex; align-items: center; gap: 20px; padding: 12px; font-size: 20px; border-radius: 99px; cursor: pointer; margin-bottom: 4px; width:fit-content; padding-right:24px; color:var(--tw-text); transition:0.2s; user-select:none;}
+        .tw-nav-item:hover { background: var(--tw-hover); }
+        .tw-tweet { display: flex; padding: 16px; border-bottom: 1px solid var(--tw-border); gap: 12px; cursor: pointer; background:var(--tw-bg); transition: 0.2s; animation: slideDown 0.3s ease;}
+        .tw-tweet:hover { background: var(--tw-hover); }
+        .tw-p-tab { flex:1; text-align:center; padding:16px; color:var(--tw-muted); font-weight:500; cursor:pointer; transition:0.2s; position:relative;}
+        .tw-p-tab:hover { background:#181818;}
+        .tw-p-tab.active { font-weight:bold; color:var(--tw-text);}
+        .tw-p-tab.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:60px; height:4px; background:var(--tw-blue); border-radius:2px;}
 
-        /* --- PARTICLES --- */
-        .confetti {
-            position: absolute; width: 8px; height: 8px; pointer-events: none;
-            z-index: 100; border-radius: 2px;
-        }
+        /* REDLINER DOC GAME */
+        .redliner-text span { cursor:pointer; padding:2px 4px; border-radius:4px; transition:0.2s; font-weight:bold;}
+        .redliner-text span.redact { background:#ffcccc; color:#d93025; border-bottom:2px solid #d93025;}
+        .redliner-text span.redacted { background:#000; color:#000; border-bottom:none; pointer-events:none;}
+        
+        /* MARKET */
+        .mkt-filter { padding-bottom:14px; cursor:pointer; transition:0.2s; color:#888; }
+        .mkt-filter:hover { color:#fff; }
+        .mkt-filter.active { color:#00c805; border-bottom:2px solid #00c805; font-weight:bold;}
 
-        #gate {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0ea5e9; z-index: 1000; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center;
-        }
+        /* ANIMATIONS */
+        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(120%); } }
+        @keyframes signWrite { 0% { width: 0; opacity: 0.5; } 100% { width: 100%; opacity: 1; } }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse { 0% { opacity: 1; transform:scale(1); } 50% { opacity: 0.8; transform:scale(0.95); } 100% { opacity: 1; transform:scale(1); } }
+        @keyframes popin { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes shake { 0%,100%{transform:translate(0,0) rotate(0);} 10%,30%,50%,70%,90%{transform:translate(-2px,-2px) rotate(-2deg);} 20%,40%,60%,80%{transform:translate(2px,2px) rotate(2deg);} }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .flash-anim { animation: flashBuy 0.5s ease; }
+        @keyframes flashBuy { 0% { background: #fff; } 50% { background: #00c805; } 100% { background: var(--mkt-bg); } }
     </style>
 </head>
 <body>
 
-    <div id="gate" onclick="start()">
-        <div style="font-size: 5rem;">🤔</div>
-        <h1 style="margin-bottom: 5px;">BRAIN MYSTERY</h1>
-        <p style="opacity: 0.8;">Can you find the logic?</p>
-        <div class="glass-card" style="padding: 15px 30px; margin-top: 20px;">START</div>
+    <div id="chrome-tabs">
+        <div class="chrome-tab active" id="tab-btn-workspace" onclick="game.switchChromeTab('workspace')"><img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" width="14"> FedMail <span class="badge" id="chrome-badge-mail" style="margin-left:4px; display:none; background:var(--primary);">●</span></div>
+        <div class="chrome-tab" id="tab-btn-slack" onclick="game.switchChromeTab('slack')"><img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" width="14"> FedChat <span class="badge" id="chrome-badge-slack" style="margin-left:4px; display:none;">!</span></div>
+        <div class="chrome-tab" id="tab-btn-aws" onclick="game.switchChromeTab('aws')"><span class="material-icons" style="font-size:14px; color:#ff9900;">cloud</span> AWS Console</div>
+        <div class="chrome-tab" id="tab-btn-cisa" onclick="game.switchChromeTab('cisa')"><span class="material-icons" style="font-size:14px; color:red;">radar</span> CISA Map <span class="badge" id="chrome-badge-cisa" style="margin-left:4px; display:none;">!</span></div>
+        <div class="chrome-tab" id="tab-btn-git" onclick="game.switchChromeTab('git')"><img src="https://github.githubassets.com/favicons/favicon.svg" width="14"> FedRepo</div>
+        <div class="chrome-tab" id="tab-btn-market" onclick="game.switchChromeTab('market')"><span class="material-icons" style="font-size:14px; color:#00c805;">show_chart</span> FedMarket</div>
+        <div class="chrome-tab" id="tab-btn-crypto" onclick="game.switchChromeTab('crypto')"><span class="material-icons" style="font-size:14px; color:#fbbc04;">monetization_on</span> OceanBank <span class="badge" id="chrome-badge-bank" style="margin-left:4px; display:none; background:red;">!</span></div>
+        <div class="chrome-tab" id="tab-btn-hr" onclick="game.switchChromeTab('hr')"><span class="material-icons" style="font-size:14px; color:#1a73e8;">people</span> HR Portal</div>
+        <div class="chrome-tab" id="tab-btn-tor" onclick="game.switchChromeTab('tor')"><span class="material-icons" style="font-size:14px; color:#8a2be2;">vpn_lock</span> Tor Browser</div>
+        <div class="chrome-tab" id="tab-btn-twitter" onclick="game.switchChromeTab('twitter')"><span style="font-size:14px; font-weight:bold; color:#000;">𝕏</span> X (Twitter) <span class="badge" id="chrome-badge-tw" style="margin-left:4px; display:none; background:var(--tw-blue);">●</span></div>
+        <div class="chrome-tab" id="tab-btn-news" onclick="game.switchChromeTab('news')"><span class="material-icons" style="font-size:14px; color:red;">public</span> FNN Live</div>
+        <div class="chrome-tab" id="tab-btn-gov" onclick="game.switchChromeTab('gov')"><span class="material-icons" style="font-size:14px; color:#002244;">account_balance</span> IC3.gov</div>
     </div>
 
-    <div id="world">
-        <div id="sun">☀️</div>
-        <div id="cloud-box"></div>
-        <div id="stage-item">🎁</div>
-        <div id="ground"></div>
-    </div>
-
-    <div id="ui">
-        <div class="header">
-            <div class="glass-card" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;" onclick="hint()">?</div>
-            <div class="glass-card" style="padding: 8px 20px;" id="lvl-tag">LEVEL 1</div>
-            <div class="glass-card" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">🏆</div>
+    <div id="main-menu" class="overlay" style="display:flex; background:#fff; color:#000; z-index:999999;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; width:100%;">
+            <h1 style="font-family:monospace; font-size:4.5rem; margin-bottom: 20px; letter-spacing:-2px;">FED_OS // <span style="color:var(--primary);">v34.0</span></h1>
+            <p style="color:var(--urgent); font-weight:bold; font-size:1.4rem; margin-bottom: 40px; display:inline-block; background:#fff3cd; padding:16px 24px; border-radius:8px; border-left:4px solid var(--urgent);">CRITICAL ALERT: NATIONAL CITIZEN DATABASE PURGED.</p>
+            <br><button class="btn-primary" style="padding:16px 40px; font-size:18px;" onclick="game.startDay()"><span class="material-icons">volume_up</span> TURN ON SOUND & INITIALIZE</button>
         </div>
-        
-        <div id="riddle-container" class="glass-card">...</div>
+    </div>
 
-        <div id="sticker-book" class="glass-card"></div>
+    <div id="os-toast-container"></div>
+
+    <div id="overlay-2fa" class="overlay">
+        <div class="glass-box">
+            <h2 style="color:var(--primary); margin-bottom:10px;">Identity Verification</h2>
+            <p>Enter PIV Token to maintain session.</p>
+            <div style="font-size:36px; font-weight:bold; letter-spacing:8px; color:#333; background:#f1f3f4; padding:16px; border-radius:8px;" id="fa-code-disp">123456</div>
+            <input type="text" id="fa-input" class="fa-input" maxlength="6" placeholder="------">
+            <div style="color:var(--urgent); font-weight:bold; font-size:24px;" id="fa-timer">00:10</div>
+        </div>
+    </div>
+
+    <div id="overlay-phone" class="overlay">
+        <div style="text-align:center;">
+            <span class="material-icons red-phone">phone_in_talk</span>
+            <h1 style="font-size:3rem; margin-bottom:10px; text-shadow:0 4px 12px rgba(234,67,53,0.5);">INCOMING SECURE CALL</h1>
+            <h2 style="color:#ccc; margin-bottom:40px;">Caller ID: POTUS (The President)</h2>
+            <div style="display:flex; gap:20px; justify-content:center;">
+                <button style="background:#188038; color:#fff; padding:20px 40px; border-radius:40px; font-size:24px; font-weight:bold; border:none; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="game.handlePhone(true)">ACCEPT</button>
+                <button style="background:#ea4335; color:#fff; padding:20px 40px; border-radius:40px; font-size:24px; font-weight:bold; border:none; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="game.handlePhone(false)">DECLINE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay-hacker" class="overlay" style="background:rgba(0,0,0,0.95);">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:800px; max-width:90%; height:70vh; background:#0c0c0c; border:2px solid var(--term-green); border-radius:8px; box-shadow:0 0 40px rgba(0,255,65,0.2); display:flex; flex-direction:column; font-family:monospace; padding:20px; overflow:hidden;">
+            <div style="color:var(--term-green); font-size:20px; font-weight:bold; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:20px; text-align:left;">UNKNOWN CONNECTION ESTABLISHED // PORT 666</div>
+            <div id="hacker-chat-log" style="flex-grow:1; overflow-y:auto; color:var(--term-green); font-size:16px; line-height:1.6; text-align:left; display:flex; flex-direction:column; gap:16px;"></div>
+            <div id="hacker-options" style="display:flex; flex-direction:column; gap:10px; margin-top:20px;"></div>
+        </div>
+    </div>
+
+    <div id="overlay-redliner" class="overlay">
+        <div class="glass-box" style="max-width:800px; width:100%; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f1f3f4; padding-bottom:16px; margin-bottom:20px;">
+                <h2 style="color:var(--primary); margin:0;">PRESS SEC DRAFT</h2>
+                <div style="color:var(--urgent); font-weight:bold; font-size:18px;">00:<span id="redline-timer">45</span></div>
+            </div>
+            <p style="margin-bottom:20px; font-size:16px;">Click the <span style="color:red; font-weight:bold;">red text</span> to redact it before it automatically publishes to CNN.</p>
+            <div class="redliner-text" style="background:#f8f9fa; padding:24px; border:1px solid #dee2e6; border-radius:8px; font-size:18px; line-height:1.8;">
+                The White House confirms a <span class="redact" onclick="this.classList.add('redacted'); game.redactCheck()">catastrophic</span> incident today. Due to the <span class="redact" onclick="this.classList.add('redacted'); game.redactCheck()">gross incompetence</span> of the Secretary of Technology, we have suffered a <span class="redact" onclick="this.classList.add('redacted'); game.redactCheck()">massive data breach</span>. Millions of citizens are <span class="redact" onclick="this.classList.add('redacted'); game.redactCheck()">at risk of identity theft</span>. We will <span class="redact" onclick="this.classList.add('redacted'); game.redactCheck()">prosecute</span> the responsible parties.
+            </div>
+        </div>
+    </div>
+    
+    <div id="overlay-lawsuit" class="overlay">
+        <div class="glass-box" style="border:4px solid var(--urgent);">
+            <span class="material-icons" style="font-size:64px; color:var(--urgent);">gavel</span>
+            <h2 style="color:var(--urgent); margin:10px 0;">LEGAL NOTICE</h2>
+            <p id="lawsuit-text" style="font-size:16px; line-height:1.6; margin-bottom:20px;"></p>
+            <button class="btn-primary" onclick="document.getElementById('overlay-lawsuit').style.display='none'">ACKNOWLEDGE</button>
+        </div>
+    </div>
+
+    <div id="crypto-transfer-overlay" class="overlay">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; background:rgba(255,255,255,0.95); padding:60px; border-radius:12px; color:#0055ff; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+            <div style="border: 6px solid #e0e0e0; border-top: 6px solid #0055ff; border-radius: 50%; width: 80px; height: 80px; animation: spin 1s linear infinite; margin:0 auto;"></div>
+            <h2 style="margin-top:30px; letter-spacing:2px; font-size:24px;">VERIFYING BLOCKCHAIN...</h2>
+            <div style="width:400px; height:24px; background:#eee; border-radius:12px; margin-top:30px; overflow:hidden; border:1px solid #ccc;"><div id="cr-prog" style="height:100%; width:0%; background:#28a745; transition:width 2.5s cubic-bezier(0.4, 0, 0.2, 1);"></div></div>
+        </div>
+    </div>
+
+    <div id="main-layout">
+        <div id="apps-wrapper">
+            
+            <div class="browser-content" id="browser-workspace" style="display: flex;">
+                <header class="gm-header" style="background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:8px 16px; height:64px; user-select:none;">
+                    <div style="display:flex; align-items:center; gap:16px; font-size:22px; color:var(--text-muted); width:240px; font-family:'Product Sans', sans-serif;"><span class="material-icons">menu</span> <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png" height="24"></div>
+                    <div style="background:#eaf1fb; border-radius:24px; display:flex; align-items:center; padding:0 16px; height:48px; flex-grow:1; max-width:720px;"><span class="material-icons-outlined" style="color:var(--text-muted);">search</span><input type="text" id="search-input" placeholder="Search in mail" style="background:transparent; border:none; outline:none; flex-grow:1; margin-left:12px; font-size:16px; color:var(--text-main);" onkeyup="game.searchGmail()"></div>
+                    <div style="display:flex; gap:12px; align-items:center; padding-right:16px;">
+                        <span class="material-icons-outlined btn-outline" style="cursor:pointer; border:none;" onclick="game.toast('IT Helpdesk is currently overwhelmed.')">help_outline</span>
+                        <div style="background:#188038; color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">S</div>
+                    </div>
+                </header>
+
+                <div style="display:flex; flex-grow:1; overflow:hidden;">
+                    <div class="gm-sidebar" style="width:240px; padding:16px 8px; background:var(--surface); display:flex; flex-direction:column; gap:4px; border-right:1px solid var(--border); user-select:none;">
+                        <button class="btn-primary" style="margin:16px; width:fit-content; background:#c2e7ff; color:#001d35; border-radius:16px; padding:16px 24px;" onclick="game.openCompose()"><span class="material-icons-outlined">edit</span> Compose</button>
+                        <div class="gm-nav-item active" id="nav-mail" onclick="game.navToGmail('inbox')"><span class="material-icons" style="color:var(--text-muted);">inbox</span> <span style="flex-grow:1;">Inbox</span><span id="inbox-badge" class="badge">New</span></div>
+                        <div class="gm-nav-item" id="nav-sent" onclick="game.navToGmail('sent')"><span class="material-icons-outlined" style="color:var(--text-muted);">send</span> <span style="flex-grow:1;">Sent</span></div>
+                        <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
+                        <div class="gm-nav-item" id="nav-docs" onclick="game.navToGmail('docs')"><span class="material-icons-outlined" style="color:var(--primary);">description</span> <span style="flex-grow:1;">Gov Docs</span><span id="docs-badge" class="badge" style="display:inline-block;">2 Due</span></div>
+                    </div>
+
+                    <div style="flex-grow:1; display:flex; flex-direction:column; background:#fff; border-radius:16px 16px 0 0; margin-top:8px; border:1px solid var(--border); overflow:hidden; position:relative;">
+                        
+                        <div id="gmail-list-view" style="display:flex; flex-direction:column; width:100%; height:100%;">
+                            <div style="display:flex; border-bottom:1px solid var(--border); user-select:none;" id="mail-tabs-header">
+                                <div class="chrome-tab active" id="tab-primary" style="flex:1; border-radius:0; border:none; border-bottom:3px solid var(--primary); background:#fff; font-size:14px; color:var(--primary);" onclick="game.navToGmail('primary')"><span class="material-icons">inbox</span> Classified</div>
+                                <div class="chrome-tab" id="tab-promotions" style="flex:1; border-radius:0; border:none; background:#fff; font-size:14px; color:var(--text-muted);" onclick="game.navToGmail('promotions')"><span class="material-icons-outlined">local_offer</span> Spam/Updates</div>
+                            </div>
+                            <div id="email-list-container" style="overflow-y:auto; flex-grow:1;"></div>
+                        </div>
+
+                        <div id="gmail-detail-view" style="display:none; flex-direction:column; width:100%; height:100%; padding:32px; overflow-y:auto;">
+                            <div style="font-size:22px; margin-bottom:24px; display:flex; align-items:center; gap:16px;">
+                                <span class="material-icons btn-outline" style="padding:8px; border-radius:50%; border:none; background:var(--surface);" onclick="game.navToGmail(game.activeGmailTab)">arrow_back</span> 
+                                <span id="email-subject-view" class="copyable-text" style="flex-grow:1; font-weight:400;">Sub</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:12px; user-select:none;">
+                                <div style="width:40px; height:40px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:18px;" id="e-avatar">?</div>
+                                <div>
+                                    <div style="font-weight:bold; font-size:14px;" class="copyable-text" id="email-sender-view">Sender</div>
+                                    <div style="color:var(--text-muted); font-size:12px;">to me</div>
+                                </div>
+                            </div>
+                            <div id="email-body-view" class="copyable-text" style="white-space:pre-wrap; color:#222; margin-top:32px; margin-left:52px; line-height:1.6; font-size:15px; max-width:800px;">Body</div>
+                            
+                            <div style="margin-top: 40px; margin-left:52px; display:flex; gap:12px; user-select:none;">
+                                <button class="btn-outline" onclick="game.prepReply()"><span class="material-icons-outlined" style="font-size:18px;">reply</span> Reply</button>
+                                <button class="btn-outline" onclick="game.prepForward()"><span class="material-icons-outlined" style="font-size:18px;">forward</span> Forward</button>
+                            </div>
+                        </div>
+
+                        <div id="docs-list-view" style="display:none; flex-direction:column; width:100%; height:100%; padding:32px; overflow-y:auto; background:var(--surface); user-select:none;">
+                            <h3 style="color:var(--urgent); margin-bottom:16px;">Action Required</h3>
+                            <div style="display:flex; gap:16px; flex-wrap:wrap;" id="action-docs-container"></div>
+                            <h3 style="margin-top:40px; margin-bottom:16px;">Federal Library</h3>
+                            <div style="display:flex; gap:16px; flex-wrap:wrap;" id="library-docs-container">
+                                <div style="background:#fff; border:1px solid var(--border); padding:20px; border-radius:8px; cursor:pointer; text-align:center; width:220px;" onclick="game.openDoc('arch')">
+                                    <span class="material-icons" style="font-size:48px; color:var(--primary);">account_tree</span><br><b style="margin-top:10px; display:block;">FedCloud_Arch.pdf</b>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="doc-detail-view" style="display:none; flex-direction:column; width:100%; height:100%; padding:24px 32px; overflow-y:auto; background:#fff; user-select:none;">
+                            <div style="font-size:22px; margin-bottom:24px; display:flex; align-items:center; gap:16px;"><span class="material-icons btn-outline" style="border:none; background:var(--surface); padding:8px; border-radius:50%; cursor:pointer;" onclick="game.navToGmail('docs')">arrow_back</span> <span id="doc-title-view" style="font-family:monospace; font-size:16px; font-weight:bold;">Doc</span></div>
+                            <div style="font-family:serif; background:#fff; max-width:800px; margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,0.1); padding:60px 80px; width:100%; line-height:1.8; font-size:16px; border:1px solid var(--border);">
+                                <div id="doc-body-view" class="copyable-text"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+            <div id="compose-window" style="display:none; position:absolute; bottom:0; right:280px; width:500px; height:500px; background:#fff; border-radius:8px 8px 0 0; box-shadow:0 8px 24px rgba(0,0,0,0.3); flex-direction:column; z-index:1000; animation: slideDown 0.3s reverse;">
+                <div style="background:#f2f6fc; padding:12px 16px; display:flex; justify-content:space-between; font-weight:500; border-bottom:1px solid #eee; align-items:center;">
+                    <span>New Message</span>
+                    <span class="material-icons btn-outline" style="padding:4px; border:none; cursor:pointer;" onclick="document.getElementById('compose-window').style.display='none'">close</span>
+                </div>
+                <input type="text" id="comp-to" placeholder="To" style="border:none; border-bottom:1px solid #f1f3f4; padding:12px 16px; outline:none; font-family:inherit; font-size:14px; width:100%;">
+                <input type="text" id="comp-sub" placeholder="Subject" style="border:none; border-bottom:1px solid #f1f3f4; padding:12px 16px; outline:none; font-family:inherit; font-size:14px; width:100%;">
+                <textarea id="comp-body" style="flex-grow:1; border:none; outline:none; padding:16px; resize:none; font-family:inherit; font-size:14px; line-height:1.5; width:100%;"></textarea>
+                <div style="padding:16px; border-top: 1px solid #f1f3f4; display:flex; gap:16px; align-items:center;">
+                    <button class="btn-primary" onclick="game.sendEmail()">Send</button>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-slack" style="flex-direction:row; background:var(--dc-bg); color:var(--dc-text); user-select:none;">
+                <div style="width:72px; background:#1e1f22; display:flex; flex-direction:column; align-items:center; padding-top:12px; gap:12px; flex-shrink:0;">
+                    <div style="width:48px; height:48px; background:var(--dc-hl); border-radius:16px; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold;">FC</div>
+                </div>
+                <div style="width:240px; background:var(--dc-side); display:flex; flex-direction:column; flex-shrink:0;">
+                    <div style="padding:16px; font-weight:900; border-bottom:1px solid #1f2023; color:#fff; font-size:16px;">Federal Branch</div>
+                    <div style="padding:24px 16px 4px; font-size:12px; font-weight:bold; color:#949ba4;">TEXT CHANNELS</div>
+                    <div class="sl-channel" id="sl-chan-general" onclick="game.swSlk('#general')"><span style="font-size:18px; color:#80848e; margin-right:4px;">#</span> general <span class="badge" id="sl-badge-general">!</span></div>
+                    <div class="sl-channel" id="sl-chan-cyber-division" onclick="game.swSlk('#cyber-division')"><span style="font-size:18px; color:#80848e; margin-right:4px;">#</span> cyber-division <span class="badge" id="sl-badge-cyber">!</span></div>
+                    <div class="sl-channel" id="sl-chan-press-room" onclick="game.swSlk('#press-room')"><span style="font-size:18px; color:#80848e; margin-right:4px;">#</span> press-room <span class="badge" id="sl-badge-press">!</span></div>
+                    <div class="sl-channel active" id="sl-chan-cabinet-crisis" onclick="game.swSlk('#cabinet-crisis')"><span class="material-icons" style="font-size:14px; color:#80848e; margin-right:4px;">lock</span> cabinet-crisis</div>
+                    <div style="padding:24px 16px 4px; font-size:12px; font-weight:bold; color:#949ba4;">DIRECT MESSAGES</div>
+                    <div class="sl-channel" id="sl-chan-sarah" onclick="game.swSlk('@Sarah')"><div style="width:24px; height:24px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=Sarah') center/cover; margin-right:4px;"></div> Dir. Cyber Sarah <span class="badge" id="sl-badge-sarah">!</span></div>
+                    <div class="sl-channel" id="sl-chan-dave" onclick="game.swSlk('@Dave')"><div style="width:24px; height:24px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=Dave') center/cover; margin-right:4px;"></div> Dave (Sales) <span class="badge" id="sl-badge-dave">!</span></div>
+                    <div class="sl-channel" id="sl-chan-genmark" onclick="game.swSlk('@Gen_Mark')"><div style="width:24px; height:24px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=Mark') center/cover; margin-right:4px;"></div> Gen. Mark <span class="badge" id="sl-badge-genmark">!</span></div>
+                </div>
+                <div style="flex-grow:1; display:flex; flex-direction:column; background:#313338; color:#dbdee1;">
+                    <div style="padding:16px 20px; border-bottom:1px solid #1f2023; font-weight:900; font-size:18px; display:flex; align-items:center; gap:8px; color:#fff;" id="slk-title"># cabinet-crisis</div>
+                    <div style="flex-grow:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:20px;" id="slack-messages-container" class="copyable-text"></div>
+                    <div style="padding:0 20px 20px;">
+                        <div style="background:#383a40; border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:12px; min-height:80px;">
+                            <div style="color:#b5bac1; font-size:14px; margin-bottom:8px;" id="slack-input-placeholder">Select a response to send...</div>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;" id="slack-options-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-aws" style="flex-direction:row; background:#fff; user-select:none;">
+                <div style="width:250px; background:#fafafa; border-right:1px solid var(--border); padding:20px; flex-shrink:0;">
+                    <div style="font-weight:bold; margin-bottom:20px; font-size:16px; display:flex; align-items:center; gap:8px;"><span class="material-icons" style="color:#ff9900;">cloud</span> GovCloud</div>
+                    <div style="padding:12px 8px; cursor:pointer; font-weight:500;" onclick="game.connectAws('ec2')">EC2 Dashboard</div>
+                </div>
+                <div style="flex-grow:1; display:flex; flex-direction:column; overflow:hidden;">
+                    <div id="aws-ec2-view" style="padding:40px; overflow-y:auto; height:100%;">
+                        <h2 style="margin-bottom:20px; font-size:24px;">Instances</h2>
+                        <table style="width:100%; border-collapse:collapse; text-align:left; border:1px solid var(--border);">
+                            <tr style="background:#fafafa; border-bottom:2px solid #ccc;"><th style="padding:12px;">Name</th><th style="padding:12px;">State</th><th style="padding:12px;">Connect</th></tr>
+                            <tr style="border-bottom:1px solid #eee;"><td style="padding:12px; font-family:monospace; font-size:16px;">Cluster_1_Web</td><td style="padding:12px; color:green; font-weight:bold;">Running</td><td style="padding:12px;"><button class="btn-primary" style="background:#ccc; color:#666;" disabled>SSH</button></td></tr>
+                            <tr style="background:#fff3cd;"><td style="padding:12px; font-family:monospace; font-size:16px; font-weight:bold;">Cluster_4_DB_Main</td><td style="padding:12px; color:red; font-weight:bold;">Alert (Purged)</td><td style="padding:12px;"><button class="btn-primary" onclick="game.connectAws('term')">Connect SSH</button></td></tr>
+                        </table>
+                    </div>
+                    <div id="aws-term-view" style="display:none; flex-direction:column; height:100%; background:var(--term-bg); color:var(--term-green); font-family:monospace; padding:24px; overflow-y:auto; font-size:16px;" onclick="document.getElementById('term-input').focus()">
+                        <div id="term-output" class="copyable-text" style="line-height:1.5;">GovCloud Bash v8.1. Connected to root@cluster4.<br>Type 'help' for commands.<br><br></div>
+                        <div style="display:flex; line-height:1.5;"><span style="margin-right:12px; font-weight:bold;">root@cluster4:~#</span><input type="text" id="term-input" style="background:transparent; border:none; outline:none; color:var(--term-green); font-family:inherit; font-size:inherit; flex-grow:1; caret-color:var(--term-green);" autocomplete="off" spellcheck="false" onkeydown="if(event.key === 'Enter') { game.handleTermCmd(this.value); this.value=''; }"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-cisa" style="background:#000; color:#fff; user-select:none;">
+                <div style="padding:24px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:24px; font-weight:bold; display:flex; align-items:center; gap:12px;"><span class="material-icons" style="color:red;">radar</span> CISA Threat Map</div>
+                    <div style="color:var(--urgent); font-weight:bold; font-size:18px; animation:pulse 1s infinite;">DDOS ATTACK DETECTED</div>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:16px; max-width:1000px; margin:60px auto; padding:24px; background:#111; border:1px solid #333; border-radius:12px;" id="cisa-grid-container"></div>
+                <div style="text-align:center; color:#888; margin-top:20px; font-size:16px;">Click flashing nodes to reroute traffic and reduce stress.</div>
+            </div>
+
+            <div class="browser-content" id="browser-git" style="background:var(--git-bg); color:#c9d1d9; overflow-y:auto; user-select:none;">
+                <div style="background:#010409; padding:16px 24px; border-bottom:1px solid var(--git-border); display:flex; align-items:center; gap:12px; font-size:16px; font-weight:bold;">
+                    <span class="material-icons">class</span> federal-org / <span style="color:#58a6ff;">fed-link-core</span>
+                </div>
+                <div style="display:flex; padding:0 24px; border-bottom:1px solid var(--git-border); background:#0d1117; gap:24px;">
+                    <div class="git-tab active"><span class="material-icons-outlined" style="font-size:18px;">code</span> Code</div>
+                </div>
+                <div style="display:flex; max-width:1200px; margin:0 auto; width:100%; padding:24px; gap:24px;">
+                    <div style="width:250px; border:1px solid var(--git-border); border-radius:6px; height:fit-content; background:#0d1117; flex-shrink:0;">
+                        <div style="padding:12px 16px; border-bottom:1px solid var(--git-border); font-weight:bold; background:#161b22; color:#e6edf3;">Files</div>
+                        <div style="padding:8px 16px; border-bottom:1px solid var(--git-border); color:#e6edf3; display:flex; align-items:center; gap:8px;"><span class="material-icons" style="color:#8b949e; font-size:18px;">folder</span> config</div>
+                        <div style="padding:8px 16px; border-bottom:1px solid var(--git-border); background:#161b22; color:#e6edf3; display:flex; align-items:center; gap:8px;"><span class="material-icons" style="color:#8b949e; font-size:18px;">folder_open</span> src/db</div>
+                        <div style="padding:8px 16px; padding-left:40px; color:#58a6ff; font-weight:bold; display:flex; align-items:center; gap:8px;"><span class="material-icons" style="font-size:18px;">insert_drive_file</span> purgeProtocol.js</div>
+                    </div>
+                    <div style="flex-grow:1;">
+                        <div style="border:1px solid var(--git-border); border-radius:6px; background:#0d1117; overflow:hidden;">
+                            <div style="background:#161b22; padding:16px; border-bottom:1px solid var(--git-border); display:flex; justify-content:space-between; align-items:center;">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="width:24px; height:24px; background:var(--primary); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;">S</div>
+                                    <span><b style="color:#e6edf3;">Sec. of Tech</b> pushed to main</span>
+                                </div>
+                                <button style="background:#238636; color:#fff; border:1px solid rgba(240,246,252,0.1); padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;" onclick="document.getElementById('overlay-git-pr').style.display='flex'">Review Code</button>
+                            </div>
+                            <div style="padding:16px; font-family:monospace; font-size:14px; line-height:1.6; color:#e6edf3; overflow-x:auto;">
+<span style="color:#ff7b72;">function</span> <span style="color:#d2a8ff;">executePurge</span>(targets, options) {
+    <span style="color:#ff7b72;">if</span> (!targets) <span style="color:#ff7b72;">return</span> false;
+    <span style="color:#8b949e;">// Code updated in PR #1102. Click 'Review Code' to inspect.</span>
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-twitter" style="flex-direction:row; justify-content:center; background:var(--tw-bg); color:var(--tw-text); user-select:none;">
+                
+                <div style="width:275px; padding:0 12px; border-right:1px solid var(--tw-border); display:flex; flex-direction:column; height:100%; flex-shrink:0;">
+                    <div style="padding:16px; font-size:32px; font-weight:bold; margin-bottom:16px; color:#fff;">𝕏</div>
+                    <div class="tw-nav-item" onclick="game.switchTwView('home')"><span class="material-icons">home</span> Home</div>
+                    <div class="tw-nav-item" onclick="game.switchTwView('notifications')"><span class="material-icons-outlined">notifications</span> Notifications <span class="badge" id="tw-notif-badge" style="display:none; background:var(--tw-blue); margin-left:4px;">●</span></div>
+                    <div class="tw-nav-item" onclick="game.openProfile('@SecOfTech', 'posts')"><span class="material-icons-outlined">person</span> Profile</div>
+                    <button style="background:var(--tw-blue); color:#fff; border:none; border-radius:99px; font-size:17px; font-weight:bold; padding:16px; cursor:pointer; margin-top:16px; width:90%; transition:0.2s;" onclick="game.switchTwView('home'); setTimeout(()=>document.getElementById('main-tw-input').focus(), 100);">Post</button>
+                </div>
+                
+                <div style="width:600px; border-right:1px solid var(--tw-border); display:flex; flex-direction:column; overflow-y:auto; position:relative; flex-shrink:0;">
+                    
+                    <div id="tw-main-view" style="display:flex; flex-direction:column; width:100%;">
+                        <div style="padding:16px; font-size:20px; font-weight:bold; border-bottom:1px solid var(--tw-border); position:sticky; top:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(12px); z-index:10; display:flex;">
+                            <div style="flex:1; text-align:center; padding-bottom:16px; border-bottom:4px solid var(--tw-blue);">For you</div>
+                        </div>
+                        <div style="display:flex; padding:16px; border-bottom:1px solid var(--tw-border); gap:12px;">
+                            <div style="width:48px; height:48px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=sec') center/cover; flex-shrink:0;"></div>
+                            <div style="flex-grow:1;">
+                                <textarea id="main-tw-input" placeholder="What is happening?!" style="width:100%; background:transparent; border:none; outline:none; resize:none; font-size:20px; font-family:inherit; height:60px; padding-top:12px; color:var(--tw-text);"></textarea>
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--tw-border); padding-top:12px; margin-top:12px;">
+                                    <div style="color:var(--tw-blue); display:flex; gap:16px;"><span class="material-icons-outlined">image</span><span class="material-icons-outlined">poll</span></div>
+                                    <button style="background:var(--tw-blue); color:#fff; border:none; border-radius:99px; font-weight:bold; padding:8px 20px; cursor:pointer; font-size:15px;" onclick="game.postTweet()">Post</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tw-timeline"></div>
+                    </div>
+
+                    <div id="tw-detail-view" style="display:none; flex-direction:column; width:100%;">
+                        <div style="padding:16px; font-weight:bold; border-bottom:1px solid var(--tw-border); display:flex; align-items:center; gap:24px; position:sticky; top:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(12px); z-index:10;">
+                            <span class="material-icons" style="cursor:pointer; padding:8px; border-radius:50%; transition:0.2s;" onmouseover="this.style.background='#181818'" onmouseout="this.style.background='transparent'" onclick="game.switchTwView('home')">arrow_back</span>
+                            <div style="font-size:20px;">Post</div>
+                        </div>
+                        <div id="tw-detail-content" style="padding:16px; border-bottom:1px solid var(--tw-border);"></div>
+                        <div style="display:flex; padding:16px; border-bottom:1px solid var(--tw-border); gap:12px;">
+                            <div style="width:48px; height:48px; border-radius:50%; background:url('https://i.pravatar.cc/150?u=sec') center/cover; flex-shrink:0;"></div>
+                            <div style="flex-grow:1;">
+                                <textarea id="reply-tw-input" placeholder="Post your reply" style="width:100%; background:transparent; color:var(--tw-text); border:none; outline:none; resize:none; font-size:18px; font-family:inherit; height:50px;"></textarea>
+                                <div style="text-align:right; margin-top:10px;"><button style="background:var(--tw-blue); color:#fff; border:none; border-radius:99px; font-weight:bold; padding:6px 20px; cursor:pointer; font-size:15px;" onclick="game.postReply()">Reply</button></div>
+                            </div>
+                        </div>
+                        <div id="tw-replies-list"></div>
+                    </div>
+
+                    <div id="tw-profile-view" style="display:none; flex-direction:column; width:100%;">
+                        <div style="padding:16px; font-weight:bold; border-bottom:1px solid var(--tw-border); display:flex; align-items:center; gap:24px; position:sticky; top:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(12px); z-index:10;">
+                            <span class="material-icons" style="cursor:pointer; padding:8px; border-radius:50%; transition:0.2s;" onmouseover="this.style.background='#181818'" onmouseout="this.style.background='transparent'" onclick="game.switchTwView('home')">arrow_back</span>
+                            <div><div id="prof-header-name" style="font-size:20px;">Name</div></div>
+                        </div>
+                        <div id="tw-profile-content"></div>
+                        <div style="display:flex; border-bottom:1px solid var(--tw-border); margin-top:16px;">
+                            <div class="tw-p-tab active" id="p-tab-posts" onclick="game.openProfile(game.viewingProfile, 'posts')">Posts</div>
+                            <div class="tw-p-tab" id="p-tab-replies" onclick="game.openProfile(game.viewingProfile, 'replies')">Replies</div>
+                        </div>
+                        <div id="tw-profile-timeline"></div>
+                    </div>
+
+                    <div id="tw-view-notifications" style="display:none; flex-direction:column; width:100%;">
+                        <div style="padding:16px; font-size:20px; font-weight:bold; border-bottom:1px solid var(--tw-border); position:sticky; top:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(12px); z-index:10; display:flex;">
+                            <div style="flex:1; text-align:center; padding-bottom:16px; border-bottom:4px solid var(--tw-blue);">All</div>
+                        </div>
+                        <div id="tw-notifications-list" style="flex-grow:1;"></div>
+                    </div>
+                </div>
+
+                <div style="width:350px; padding:12px 24px; overflow-y:auto; flex-shrink:0;">
+                    <div style="background:#16181c; border-radius:16px; padding:16px 0;">
+                        <div style="font-size:20px; font-weight:900; padding:0 16px 16px; color:#e7e9ea;">What's happening</div>
+                        <div style="padding:12px 16px;"><div style="font-size:13px; color:var(--tw-muted);">Politics · Trending</div><div style="font-size:15px; font-weight:bold; margin-top:2px; color:#e7e9ea;">#FedLeak</div></div>
+                        <div style="padding:12px 16px;"><div style="font-size:13px; color:var(--tw-muted);">Finance · Trending</div><div style="font-size:15px; font-weight:bold; margin-top:2px; color:#e7e9ea;">Market Crash</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-market" style="background:var(--mkt-bg); color:#fff; overflow-y:auto; font-family:-apple-system, sans-serif; user-select:none;">
+                <div style="padding:24px 40px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:28px; font-weight:bold; color:#00c805; display:flex; align-items:center; gap:8px;"><span class="material-icons">show_chart</span> FedMarket</div>
+                    <div style="font-size:18px; color:#888;">Buying Power: <b style="color:#fff; font-size:22px;" class="sync-balance">$14,250.00</b></div>
+                </div>
+                <div style="padding:40px; max-width:900px; margin:0 auto; width:100%;">
+                    <div style="color:#888; font-weight:bold; font-size:20px; letter-spacing:1px;">US TECH INDEX (APEX)</div>
+                    <div style="font-size:72px; font-weight:300; letter-spacing:-2px; margin-top:8px;" id="mkt-price-ui">$4,120.50</div>
+                    <div style="color:var(--urgent); font-size:22px; display:flex; align-items:center; gap:8px; margin-top:4px;" id="mkt-change-ui"><span class="material-icons">arrow_downward</span> Crashing</div>
+                    
+                    <div style="display:flex; gap:30px; color:#888; font-weight:bold; margin-top:40px; border-bottom:1px solid #333; padding-bottom:16px;">
+                        <div id="mkt-btn-1D" class="mkt-filter active" style="color:#00c805; border-bottom:2px solid #00c805; padding-bottom:14px; cursor:pointer;" onclick="game.switchMarketRange('1D')">1D</div>
+                        <div id="mkt-btn-1W" class="mkt-filter" style="padding-bottom:14px; cursor:pointer; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" onclick="game.switchMarketRange('1W')">1W</div>
+                        <div id="mkt-btn-1M" class="mkt-filter" style="padding-bottom:14px; cursor:pointer; transition:0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" onclick="game.switchMarketRange('1M')">1M</div>
+                    </div>
+
+                    <div style="margin-top:40px; height:250px; position:relative; display:flex; align-items:flex-end; justify-content:space-between; gap:4px; padding-bottom:10px; border-bottom:2px solid #333;" id="mkt-graph-container"></div>
+                    
+                    <div style="display:flex; gap:20px; margin-top:40px;">
+                        <button style="flex:1; padding:20px; font-size:18px; background:var(--urgent); color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(217,48,37,0.3); transition:0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="game.buyPuts(500)">BUY 1W PUT ($500)</button>
+                        <button style="flex:1; padding:20px; font-size:18px; background:var(--urgent); color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(217,48,37,0.3); transition:0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="game.buyPuts(1000)">BUY 2W PUT ($1000)</button>
+                        <button style="flex:1; padding:20px; font-size:18px; background:var(--urgent); color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(217,48,37,0.3); transition:0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="game.buyPuts(2500)">BUY 1M PUT ($2500)</button>
+                    </div>
+                    
+                    <h3 style="margin-top:60px; color:#888;">Individual Equities</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:20px; border-radius:8px; margin-top:20px; border:1px solid #333;">
+                        <div>
+                            <div style="font-weight:bold; font-size:20px;">CyberDyne Systems (CYBR)</div>
+                            <div style="color:#00c805; font-size:18px; margin-top:4px;" id="cybr-price-ui">$42.50</div>
+                        </div>
+                        <button style="padding:16px 24px; font-size:16px; background:#00c805; color:#000; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="game.buyCybrCalls()">BUY CALLS ($2000)</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-crypto" style="background:#f4f6f9; align-items:center; padding-top:60px; position:relative; user-select:none;">
+                <div style="background:#fff; width:100%; max-width:600px; border-radius:16px; padding:40px; box-shadow:0 8px 32px rgba(0,0,0,0.08); border:1px solid var(--border);">
+                    <h2 style="color:#0055ff; display:flex; align-items:center; gap:12px; font-size:28px;"><span class="material-icons" style="font-size:36px;">account_balance</span> OceanBank</h2>
+                    <div style="font-size:56px; font-weight:bold; margin:24px 0 32px; letter-spacing:-1px;" class="sync-balance">$14,250.00</div>
+                    
+                    <div id="bank-invoices"></div>
+
+                    <div style="font-weight:bold; margin-bottom:8px; color:var(--text-muted);">Wire Transfer to Address</div>
+                    <input type="text" id="cr-to" placeholder="e.g. SYNDICATE_0x9928" style="width:100%; padding:16px; margin-bottom:20px; border:1px solid #ccc; border-radius:8px; font-size:16px; font-family:monospace;">
+                    <div style="font-weight:bold; margin-bottom:8px; color:var(--text-muted);">Amount (USD)</div>
+                    <input type="number" id="cr-amt" placeholder="0.00" style="width:100%; padding:16px; margin-bottom:32px; border:1px solid #ccc; border-radius:8px; font-size:16px;">
+                    <button class="btn-primary" style="width:100%; padding:20px; justify-content:center; font-size:18px;" onclick="game.sendCrypto()">Authorize Transfer</button>
+                    <div id="cr-err" style="color:red; text-align:center; margin-top:16px; display:none; font-weight:bold; font-size:16px;">Insufficient Funds</div>
+                </div>
+
+                <div id="crypto-transfer-overlay" class="overlay" style="background:rgba(255,255,255,0.95); color:#0055ff; z-index:999999;">
+                    <div style="border: 6px solid #e0e0e0; border-top: 6px solid #0055ff; border-radius: 50%; width: 80px; height: 80px; animation: spin 1s linear infinite;"></div>
+                    <h2 style="margin-top:30px; letter-spacing:2px; font-size:24px;">VERIFYING BLOCKCHAIN...</h2>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-hr" style="background:#f4f6f9; overflow-y:auto; padding:40px; user-select:none;">
+                <div style="max-width:800px; margin:0 auto; background:#fff; padding:40px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                    <h2 style="color:var(--primary); margin-bottom:30px; border-bottom:2px solid var(--primary); padding-bottom:10px;">Federal Employee Directory</h2>
+                    <table style="width:100%; border-collapse:collapse; text-align:left;">
+                        <tr style="background:#f1f3f4; border-bottom:2px solid #ccc;"><th style="padding:12px;">Name</th><th style="padding:12px;">Role</th><th style="padding:12px;">Action</th></tr>
+                        <tr style="border-bottom:1px solid #eee;"><td style="padding:12px; font-weight:bold;">Sarah Jenkins</td><td style="padding:12px;">Dir. Cyber Division</td><td style="padding:12px;"><button class="btn-outline" disabled>LOCKED</button></td></tr>
+                        <tr style="border-bottom:1px solid #eee;"><td style="padding:12px; font-weight:bold;">Mark Vance</td><td style="padding:12px;">Chief of Staff</td><td style="padding:12px;"><button class="btn-outline" disabled>LOCKED</button></td></tr>
+                        <tr style="border-bottom:1px solid #eee; background:#fff3cd;" id="hr-intern-row"><td style="padding:12px; font-weight:bold; color:red;">Dave (Intern)</td><td style="padding:12px;">Software Intern</td><td style="padding:12px;"><button style="background:var(--urgent); color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="game.fireIntern()" id="btn-fire-dave">TERMINATE</button></td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-tor" style="background:#0a0a0a; color:#00ff41; font-family:monospace; padding:40px; overflow-y:auto; user-select:none;">
+                <div style="border-bottom:2px dashed #00ff41; padding-bottom:16px; margin-bottom:30px; display:flex; justify-content:space-between; font-size:18px;">
+                    <span>TOR // Onion Router v9.2</span><span>Encrypted Channel</span>
+                </div>
+                <div style="display:flex; gap:40px; height:100%;">
+                    <div id="tor-chat" style="flex:1; font-size:16px; line-height:1.8; border-right:1px solid #333; padding-right:20px; overflow-y:auto;">
+                        <div style="margin-bottom:16px; padding-bottom:16px; border-bottom:1px dashed #333;"><b>[System]:</b> Welcome to Dread Forum.</div>
+                    </div>
+                    <div style="flex:1; padding-left:20px;">
+                        <h2 style="color:#fff; margin-bottom:20px;">Dread Marketplace</h2>
+                        <div style="border:1px solid #333; padding:20px; margin-bottom:20px; background:#111;">
+                            <h3 style="color:#ff5000;">SELL: Gov Access Codes</h3>
+                            <p style="color:#aaa; margin:10px 0;">Sell your clearance keys. Highly illegal.</p>
+                            <button style="background:#ff5000; color:#fff; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;" onclick="game.sellCodes()">SELL (+$15,000 / +15% Stress)</button>
+                        </div>
+                        <div style="border:1px solid #333; padding:20px; margin-bottom:20px; background:#111;">
+                            <h3 style="color:var(--primary);">BUY: Fake Identity</h3>
+                            <p style="color:#aaa; margin:10px 0;">Scrub your name from the DOJ list. Relieves massive stress.</p>
+                            <button style="background:var(--primary); color:#fff; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;" onclick="game.buyIdentity()">BUY (-$30,000 / -30% Stress)</button>
+                        </div>
+                        <div style="border:1px solid #333; padding:20px; background:#111;">
+                            <h3 style="color:#00c805;">BUY: Private Offshore Island</h3>
+                            <p style="color:#aaa; margin:10px 0;">Disappear forever. Win the game immediately.</p>
+                            <button style="background:#00c805; color:#000; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; margin-top:10px;" onclick="game.buyIsland()">BUY (-$2,500,000)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-news" style="flex-direction:column; background:#fff; user-select:none;">
+                <div style="background:#c92a2a; color:#fff; padding:20px; font-size:32px; font-weight:900; letter-spacing:2px; display:flex; align-items:center; gap:16px;">
+                    <span class="material-icons" style="font-size:40px;">public</span> FNN - FEDERAL NEWS NETWORK
+                </div>
+                <div style="flex-grow:1; background:url('https://images.unsplash.com/photo-1495020632541-8fac342200dc?auto=format&fit=crop&w=1200&q=80') center/cover; position:relative;">
+                    <div style="position:absolute; bottom:50px; left:0; width:100%; background:rgba(0,0,0,0.8); color:#fff; padding:20px 40px;">
+                        <h1 style="margin:0; font-size:48px; color:#ffcc00;" id="news-main-headline">CRISIS IN THE CAPITAL</h1>
+                        <h2 style="margin:10px 0 0 0; color:#ccc;">Government goes silent as database failure enters its 2nd hour.</h2>
+                    </div>
+                </div>
+                <div class="news-ticker-wrap">
+                    <div class="news-ticker-move" id="news-ticker-text">
+                        BREAKING: US DOLLAR PLUMMETS GLOBALLY AMID RUMORS OF MASSIVE DATA WIPE. || PRESIDENTIAL ADDRESS SCHEDULED FOR 9:00 AM. ||
+                    </div>
+                </div>
+            </div>
+
+            <div class="browser-content" id="browser-gov" style="background:#e9ecef; overflow-y:auto; font-family:Georgia, serif; user-select:none;">
+                <div style="background:#0a2540; color:#fff; padding:40px; text-align:center; border-bottom:8px solid #c92a2a; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+                    <span class="material-icons" style="font-size:72px;">account_balance</span>
+                    <h1 style="margin-top:16px; font-size:32px; letter-spacing:1px;">INTERNET CRIME COMPLAINT CENTER (IC3)</h1>
+                </div>
+                <div style="max-width:700px; margin:40px auto; background:#fff; border:1px solid #ced4da; padding:40px; border-radius:4px; border-top:6px solid #0a2540;">
+                    <div id="gov-form-area">
+                        <label style="font-weight:bold; margin-bottom:8px; display:block; color:#343a40;">Query (IP Address or Full Name)</label>
+                        <input type="text" id="suspect-ip" style="width:100%; padding:12px; margin-bottom:32px; border:1px solid #adb5bd; border-radius:4px; font-size:16px; font-family:monospace;" placeholder="e.g. 192.168.x.x or John Doe">
+                        <button style="background:#0a2540; color:#fff; border:none; width:100%; padding:18px; font-size:18px; font-weight:bold; border-radius:4px; cursor:pointer;" onclick="game.submitTip()">RUN QUERY / DISPATCH AGENTS</button>
+                    </div>
+                    <div id="gov-pending-area" style="display:none; text-align:center; padding:60px 0;">
+                        <div style="border:4px solid #f1f3f5; border-top:4px solid #c92a2a; border-radius:50%; width:60px; height:60px; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                        <h2 style="color:#0a2540; margin-top:30px; letter-spacing:1px;">QUERYING DATABASE...</h2>
+                    </div>
+                    <div id="gov-result-area" style="display:none; text-align:center; padding:20px 0;"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="status-sidebar">
+            <div class="stat-card" style="background:#fce8e6; border-color:var(--urgent); text-align:center;">
+                <div style="color:var(--urgent); font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Time (EST)</div>
+                <div class="clock-display" id="clock-ui">08:56:00</div>
+                <div style="font-size:12px; color:var(--urgent); margin-top:8px; font-weight:bold;">09:00 Deadline</div>
+            </div>
+            <div class="stat-card">
+                <div style="font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Stress Level</div>
+                <div id="ui-stress" style="font-size:28px; font-weight:bold; margin-top:8px;">20%</div>
+                <div style="width:100%; height:8px; background:#eee; margin-top:12px; border-radius:4px; overflow:hidden;"><div id="stress-bar" style="width:20%; height:100%; background:var(--primary); transition:0.3s;"></div></div>
+            </div>
+            <div class="stat-card" style="text-align:center;">
+                <div style="font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted);">Personal Balance</div>
+                <div id="cr-balance-ui" style="font-size:20px; font-weight:bold; margin-top:8px; color:#0055ff;" class="sync-balance">$14,250.00</div>
+            </div>
+            <div style="font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:1px; margin-top:10px;">Action Log</div>
+            <div id="log-area" style="box-shadow:inset 0 2px 4px rgba(0,0,0,0.05);">> System Booted.<br></div>
+        </div>
+
     </div>
 
     <script>
+        // GLOBAL ERROR SHIELD - Prevents silent crashes from killing the clock
+        window.onerror = function(message, source, lineno, colno, error) { console.warn("Game Shield caught error: ", message); return true; };
+
+        const audio = {
+            ctx: null, hbTimer: null,
+            init() { try { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.ctx.resume(); } catch(e) {} },
+            playTone(freq, type, dur, vol, delay=0) {
+                if(!this.ctx || game.settingsMute) return;
+                try {
+                    setTimeout(() => {
+                        let osc = this.ctx.createOscillator(); let gain = this.ctx.createGain();
+                        osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(vol, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
+                        osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime + dur);
+                    }, delay);
+                } catch(e) {}
+            },
+            gmail() { this.playTone(880, 'sine', 0.5, 0.1); this.playTone(1108, 'sine', 0.5, 0.1, 100); },
+            slack() { this.playTone(400, 'square', 0.1, 0.05); this.playTone(300, 'square', 0.1, 0.05, 100); },
+            tweet() { this.playTone(1200, 'triangle', 0.1, 0.05); this.playTone(1500, 'triangle', 0.1, 0.05, 100); },
+            error() { this.playTone(150, 'sawtooth', 0.5, 0.2); this.playTone(100, 'sawtooth', 0.5, 0.2, 200); },
+            heartbeat() { 
+                if(!this.ctx || game.settingsMute || game.stress < 50) return; 
+                let speed = game.stress > 80 ? 400 : 800; let vol = game.stress/100 * 0.5; 
+                this.playTone(60, 'sine', 0.3, vol); setTimeout(()=>this.playTone(55, 'sine', 0.3, vol), 200); 
+                if(!this.hbTimer) this.hbTimer = setInterval(()=> {
+                    if(game.stress >= 50 && !game.settingsMute) { let v = game.stress/100 * 0.5; this.playTone(60, 'sine', 0.3, v); setTimeout(()=>this.playTone(55, 'sine', 0.3, v), 200); }
+                }, speed);
+            }
+        };
+
         const game = {
-            lvl: 1,
-            locked: false,
-            startT: Date.now(),
-            tiltX: 0, tiltY: 0,
-            accel: 0
-        };
-
-        const levels = [
-            { r: "The gift is locked.", i: "🎁", s: "💎", win: "click" },
-            { r: "The owl is sleeping.", i: "🦉", s: "🌙", win: "shake" },
-            { r: "Gravity is broken.", i: "⚽", s: "👟", win: "tilt-up" },
-            { r: "The level is wrong.", i: "❓", s: "🏅", win: "ui-tap" },
-            { r: "Be a statue.", i: "🗿", s: "🧠", win: "wait" },
-            { r: "Too much sun.", i: "☀️", s: "🥤", win: "sun-tap" },
-            { r: "It's dark in here.", i: "👽", s: "☁️", win: "facedown" },
-            { r: "The apple is heavy.", i: "🍎", s: "🌳", win: "flip" },
-            { r: "Dirty clouds.", i: "☁️", s: "🎈", win: "cloud-rub" },
-            { r: "One tap is not enough.", i: "🥚", s: "🐥", win: "triple-tap" }
-        ];
-
-        function start() {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission();
-            }
-            document.getElementById('gate').style.display = 'none';
-            initLevel();
-            setupLoop();
-        }
-
-        function initLevel() {
-            const data = levels[game.lvl - 1];
-            const item = document.getElementById('stage-item');
-            item.innerText = data.i;
-            item.style.transform = "translate(-50%, -50%) scale(1)";
-            document.getElementById('riddle-container').innerText = data.r;
-            document.getElementById('lvl-tag').innerText = "LEVEL " + game.lvl;
-            game.startT = Date.now();
+            activeChromeTab: 'workspace', gameStarted: false,
+            timeSeconds: 32160, stress: 20, settingsMute: false, 
+            docSigned: false, subSigned: false, fineSigned: false, 
+            hasReverted: false, dbFixed: false, hackerArrested: false, tookBribe: false, leakedToPress: false, 
+            firedIntern: false, internReports: 0, newHire: null,
+            balance: 14250, stockPrice: 4120.50, stockHistory: [4200,4180,4150,4135,4120.5], putsOwned: 0, cybrOwned: 0, cybrPrice: 42.50, cybrPumped: false,
+            hackerIP: '104.228.15.90', lockedTab: false, awsBillActive: false, awsPaid: false,
             
-            // Generate clouds
-            const cb = document.getElementById('cloud-box');
-            cb.innerHTML = '';
-            for(let i=0; i<3; i++) {
-                const c = document.createElement('div');
-                c.className = 'cloud';
-                c.style.top = (120 + i*50) + 'px';
-                c.style.left = (Math.random()*60) + '%';
-                c.onclick = () => { if(levels[game.lvl-1].win === "cloud-rub") win(); };
-                cb.appendChild(c);
-            }
-        }
+            unlockedDocs: [
+                { id: 'nda', title: 'DOJ_Waiver.pdf', icon: 'gavel', color: 'var(--urgent)', signed: false, lbl: 'Signature Required' },
+                { id: 'sub', title: 'Fed_Subpoena.pdf', icon: 'policy', color: 'var(--urgent)', signed: false, lbl: 'Signature Required' }
+            ],
 
-        function win() {
-            if(game.locked) return;
-            game.locked = true;
-            pop(window.innerWidth/2, window.innerHeight/2);
-            
-            const book = document.getElementById('sticker-book');
-            const slot = document.createElement('div');
-            slot.className = 'slot';
-            slot.innerText = levels[game.lvl-1].s;
-            book.appendChild(slot);
+            // GMAIL
+            currentApp: 'mail', activeGmailTab: 'primary', activeGmailView: 'list', emailDirty: false, emailCounter: 100, currentEmailView: null,
+            emails: [
+                { id: 1, tab: 'primary', read: false, sender: 'Chief of Staff Vance', subject: '[URGENT] CABINET SUMMONS', snippet: 'The President is furious...', body: 'Secretary,\n\nThe President is furious. If the servers aren\'t restored by 9:00 AM, you will go to prison.' },
+                { id: 2, tab: 'primary', read: false, sender: 'DOJ Legal', subject: 'Federal Subpoena / NDA', snippet: 'Please review...', body: 'Telemetry suggests you bypassed the DB fail-safe. Go to your Gov Docs tab and sign the Liability Waiver immediately.' }
+            ],
+            emailPool: [
+                { t: 'primary', s: 'Press Secretary', sub: 'URGENT: Review Press Release', b: 'CNN is about to run a story. Open Gov Docs and review the Press_Draft.pdf immediately. Redact the bad parts.' },
+                { t: 'primary', s: 'Pentagon Procurement', sub: 'CLASSIFIED: CyberDyne', b: 'Secretary, we are awarding the $5B emergency recovery contract to CyberDyne Systems (CYBR) in exactly 40 seconds. Keep this strictly confidential.' },
+                { t: 'promotions', s: 'AWS Billing', sub: 'GovCloud Limit Exceeded', b: 'Warning: Accrued $42,000 in taxpayer charges. Pay the invoice via OceanBank immediately.' },
+                { t: 'primary', s: 'Pentagon Command', sub: 'AUTHORIZATION: Martial Law', b: 'Secretary, we need your digital signature to authorize a military lockdown in key states due to the riots. Check your Gov Docs.' }
+            ],
+            genericMail: [
+                {t: 'promotions', s: 'UberEats', sub: 'You deserve a break', b: 'Get 15% off delivery with code STRESS15.'},
+                {t: 'primary', s: 'HR Dept', sub: 'Intern Performance', b: 'Dave is doing great! He organized the repo.'},
+                {t: 'primary', s: 'White House IT', sub: 'Server Load Alert', b: 'GovCloud node 4 is completely unresponsive.'},
+                {t: 'primary', s: 'Lead Developer', sub: 'INCIDENT REPORT: Intern', b: 'Dave pushed straight to production and broke the API. This is a formal report.', isBadReport: true},
+                {t: 'primary', s: 'Sen. Davis (Aide)', sub: 'Inquiry on DB', b: 'The Senator is requesting a brief on the current outage.'},
+                {t: 'primary', s: 'Payroll Dept', sub: 'Direct Deposit Update', b: 'Your banking details have been verified.'},
+                {t: 'promotions', s: 'LinkedIn', sub: 'You appeared in 43 searches', b: 'Recruiters are actively looking at your profile.'}
+            ],
 
-            if (navigator.vibrate) navigator.vibrate([40, 40, 40]);
+            // SLACK
+            currentSlackChan: '#cabinet-crisis',
+            slackData: { 
+                '#general': [{sender:'Sen. Davis', text:'Is the portal down?', time:'8:50 AM'}], 
+                '#cyber-division': [{sender:'Dir. Sarah', text:'Who disabled safeMode?!', time:'8:52 AM'}],
+                '#cabinet-crisis': [{sender:'System', text:'Channel created.', time:'8:55 AM'}], 
+                '#press-room': [{sender:'Press Sec', text:'Do not talk to CNN.', time:'8:54 AM'}],
+                '@Sarah': { history:[{sender:'Dir. Cyber Sarah', text:'Revert the commit in GitHub!', time:'8:56 AM'}], options:[{text:"Working on it.", reply:"Hurry up."}] },
+                '@Dave(Sales)': { history:[{sender:'Dave (Sales)', text:'Bro my leads are freaking out, is the system actually wiped?', time:'8:57 AM'}], options:[{text:"It's gone, Dave.", reply:"Oh my god. I'm selling my stock."}, {text:"Just a glitch.", reply:"I'll believe it when I see it."}] },
+                '@Gen_Mark': { history:[{sender:'Gen. Mark', text:'Give me the word and we move on the server farms. Tell me.', time:'8:58 AM'}], options:[{text:"Stand down.", reply:"Copy that."}, {text:"Move in.", reply:"Troops deployed. God help us."}] }
+            },
 
-            setTimeout(() => {
-                game.lvl++;
-                game.locked = false;
-                if(game.lvl > levels.length) {
-                    alert("GENIUS!");
-                    game.lvl = 1;
-                    book.innerHTML = '';
+            // TWITTER
+            activeTwView: 'home', viewingProfile: null, viewingTweetId: null, tweetCounter: 3, twNotifications: [],
+            twUsers: [
+                {n:'CNN Politics', h:'@CNNPolitics', v:true, a:'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', banner:'https://images.unsplash.com/photo-1555026408-041496a750df', bio:'The latest political news.', f:14200000, isFollowed:false},
+                {n:'The New York Times', h:'@nytimes', v:true, a:'https://upload.wikimedia.org/wikipedia/commons/4/40/New_York_Times_logo_variation.jpg', banner:'https://images.unsplash.com/photo-1504711434969-e33886168f5c', bio:'All the news that\'s fit to print.', f:55000000, isFollowed:false},
+                {n:'CryptoBro', h:'@coinz4dayz', v:false, a:'https://i.pravatar.cc/150?u=cb', bio:'To the moon.', f:12000, isFollowed:false},
+                {n:'AngryCitizen', h:'@citizen99', v:false, a:'https://i.pravatar.cc/150?u=ac', bio:'Just a guy.', f:42, isFollowed:false},
+                {n:'Mayor Adams', h:'@NYCMayor', v:true, a:'https://i.pravatar.cc/150?u=mayor', banner:'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9', bio:'Mayor of NYC.', f:2000000, isFollowed:false},
+                {n:'Governor CA', h:'@GovCA', v:true, a:'https://i.pravatar.cc/150?u=gov', banner:'https://images.unsplash.com/photo-1449034446853-66c86144b0ad', bio:'Official.', f:4500000, isFollowed:false},
+                {n:'FBI', h:'@FBI', v:true, a:'https://upload.wikimedia.org/wikipedia/commons/d/da/Seal_of_the_Federal_Bureau_of_Investigation.svg', banner:'https://images.unsplash.com/photo-1589829085413-56de8ae18c73', bio:'Federal Bureau of Investigation.', f:3500000, isFollowed:false}
+            ],
+            tweets: [
+                { id:1, name:'CNN Politics', handle:'@CNNPolitics', avatar:'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', verified:true, time:'2m', text:'BREAKING: Massive data wipe in the federal government. #FedLeak', image:null, likes:12400, rts:4500, replies:[] },
+                { id:2, name:'The New York Times', handle:'@nytimes', avatar:'https://upload.wikimedia.org/wikipedia/commons/4/40/New_York_Times_logo_variation.jpg', verified:true, time:'5m', text:'Millions of citizens report losing access to the Fed-Link portal.', image:null, likes:8900, rts:3100, replies:[] }
+            ],
+            twPool: [{u:0, text:'Sources say emergency subpoena at 9:00 AM.'}, {u:2, text:'Dollar dropping fast. 📉'}, {u:4, text:'NYC services are offline. We demand answers from the federal government. #FedLeak'}, {u:6, text:'The FBI is actively investigating the GovCloud breach. Submit tips to IC3.gov.'}, {u:5, text:'Deploying National Guard to secure key data centers in California.'}],
+
+            torPool: ["User44: I bid 2 BTC for the DB.", "NullSec: Waiting for the drop.", "Admin: Auction closes in 3 mins.", "CyberPunk: This leak is massive."],
+
+            startDay() {
+                try {
+                    if(this.gameStarted) return; this.gameStarted = true;
+                    let mm = document.getElementById('main-menu'); if(mm) mm.style.display = 'none';
+                    audio.init(); audio.heartbeat();
+                    
+                    try{ this.renderEmails(); }catch(e){}
+                    try{ this.renderSlack(); }catch(e){}
+                    try{ this.renderMarket(); }catch(e){}
+                    try{ this.renderTweets(); }catch(e){}
+                    try{ this.renderCisa(); }catch(e){}
+                    
+                    this.startClocks();
+                    this.toast("GovOS Initialized. Critical Errors Detected.");
+                } catch(e) { console.error(e); }
+            },
+
+            // --- CHROME ROUTER ---
+            switchChromeTab(id) {
+                try {
+                    if(this.lockedTab) { this.toast("Tab locked by 2FA failure."); audio.error(); return; }
+                    this.activeChromeTab = id;
+                    
+                    document.querySelectorAll('.chrome-tab').forEach(t=>t.classList.remove('active'));
+                    let tb = document.getElementById('tab-btn-'+id); if(tb) tb.classList.add('active');
+                    
+                    document.querySelectorAll('.browser-content').forEach(c=>c.style.display='none');
+                    let bc = document.getElementById('browser-'+id); if(bc) bc.style.display='flex';
+                    
+                    if(id === 'workspace') { this.switchApp('mail'); this.switchGmailView('inbox'); }
+                    if(id === 'twitter') { this.switchTwView('home'); }
+                    if(id === 'terminal' || id === 'aws') setTimeout(()=> { let ti = document.getElementById('term-input'); if(ti) ti.focus(); }, 100);
+                    
+                    let b = document.getElementById('chrome-badge-'+(id==='workspace'?'mail':id)); if(b) b.style.display = 'none';
+                } catch(e) { console.error(e); }
+            },
+
+            toast(msg) {
+                if(this.settingsMute) return;
+                const tc = document.getElementById('os-toast-container');
+                if(tc) {
+                    let t = document.createElement('div'); t.className = 'os-toast';
+                    t.innerHTML = `<span class="material-icons" style="color:var(--primary);">notifications</span> <div>${msg}</div>`;
+                    tc.appendChild(t);
+                    setTimeout(() => { t.style.animation = 'fadeOutRight 0.4s forwards'; setTimeout(()=>t.remove(), 400); }, 3500);
                 }
-                initLevel();
-            }, 1200);
-        }
+            },
+            log(msg, color="#666") {
+                const l = document.getElementById('log-area'); 
+                if(l) { l.innerHTML += `<div style="color:${color};">> ${msg}</div>`; l.scrollTop = l.scrollHeight; }
+            },
+            updateStats() {
+                let uiStress = document.getElementById('ui-stress'); if(uiStress) uiStress.innerText = this.stress + "%";
+                let sBar = document.getElementById('stress-bar'); if(sBar) { sBar.style.width = this.stress + "%"; sBar.style.background = this.stress > 60 ? 'orange' : 'var(--primary)'; }
+                document.querySelectorAll('.sync-balance').forEach(el => el.innerText = "$" + this.balance.toLocaleString('en-US',{minimumFractionDigits:2}));
+                if(this.stress >= 100) this.evaluateEnding("BURNOUT");
+            },
 
-        // --- INTERACTION LOGIC ---
-        document.getElementById('stage-item').onclick = () => {
-            const goal = levels[game.lvl-1].win;
-            if(goal === "click") win();
-            
-            // Squash effect
-            const itm = document.getElementById('stage-item');
-            itm.style.transform = "translate(-50%, -50%) scale(0.8)";
-            setTimeout(() => itm.style.transform = "translate(-50%, -50%) scale(1.1)", 100);
-            setTimeout(() => itm.style.transform = "translate(-50%, -50%) scale(1)", 200);
-        };
+            // --- BACKGROUND ENGINES ---
+            startClocks() {
+                try {
+                    let globalTicks = 0;
+                    setInterval(() => {
+                        try {
+                            this.timeSeconds++; globalTicks++;
+                            let h = Math.floor(this.timeSeconds / 3600); let m = Math.floor((this.timeSeconds % 3600) / 60); let s = this.timeSeconds % 60;
+                            let cui = document.getElementById('clock-ui'); 
+                            if(cui) cui.innerText = `0${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+                            if (this.timeSeconds >= 32400) { this.evaluateEnding(); } 
+                            
+                            // Events
+                            if(this.cybrOwned > 0 && globalTicks >= 40 && !this.cybrPumped) {
+                                this.cybrPumped = true; this.cybrPrice = 450.00;
+                                this.balance += this.cybrOwned * 45000; this.updateStats();
+                                this.toast("CYBERDYNE CONTRACT ANNOUNCED. CYBR +1000%."); audio.error();
+                                let cp = document.getElementById('cybr-price-ui'); if(cp) { cp.innerText = "$450.00"; cp.style.color = "var(--primary)"; }
+                            }
+                            if(globalTicks === 35) this.triggerHackerChat();
+                            this.updateTicker();
+                        } catch(e) {}
+                    }, 1000);
 
-        // Triple Tap Logic
-        let tapCount = 0;
-        document.getElementById('stage-item').addEventListener('touchstart', () => {
-            if(levels[game.lvl-1].win === "triple-tap") {
-                tapCount++;
-                if(tapCount >= 3) { tapCount=0; win(); }
-            }
-        });
+                    setInterval(() => {
+                        try {
+                            if(this.emailDirty && this.activeChromeTab === 'workspace' && this.currentApp === 'mail' && this.activeGmailView === 'list') {
+                                this.renderEmails(); this.emailDirty = false;
+                            }
+                        } catch(e) {}
+                    }, 200);
 
-        document.getElementById('lvl-tag').onclick = () => {
-            if(levels[game.lvl-1].win === "ui-tap") win();
-        };
+                    const emailLoop = () => {
+                        try {
+                            let nE = this.emailPool.length > 0 ? this.emailPool.shift() : this.genericMail[Math.floor(Math.random()*this.genericMail.length)];
+                            if(nE.isBadReport) this.internReports++;
+                            
+                            this.emails.unshift({ id: this.emailCounter++, tab: nE.t || nE.tab, read: false, sender: nE.s || nE.sender, subject: nE.sub || nE.subject, snippet: nE.b ? nE.b.substring(0,20)+'...' : nE.body.substring(0,20)+'...', body: nE.b || nE.body });
+                            this.emailDirty = true;
+                            this.toast(`New email from ${nE.s || nE.sender}`); audio.gmail();
+                            
+                            if((nE.t || nE.tab) === 'primary' && (this.activeChromeTab !== 'workspace' || this.currentApp !== 'mail' || this.activeGmailTab !== 'primary')) { 
+                                let cb = document.getElementById('chrome-badge-mail'); if(cb) cb.style.display = 'inline-block';
+                                let ib = document.getElementById('inbox-badge'); if(ib) ib.style.display = 'inline-block'; 
+                            }
+                            
+                            if((nE.sub || nE.subject).includes('Review Press Release')) { this.unlockDoc('pr', 'Press_Draft.pdf', 'campaign', '#fbbc04', 'Redact Immediately'); }
+                            if((nE.sub || nE.subject).includes('Martial Law')) { this.unlockDoc('ml', 'Martial_Law.pdf', 'security', 'var(--urgent)', 'Signature Required'); }
+                            if((nE.sub || nE.subject).includes('AWS Billing')) { this.spawnAwsBill(); }
+                        } catch(e) {}
+                        finally { setTimeout(emailLoop, Math.random() * 6000 + 4000); }
+                    }; setTimeout(emailLoop, 4000);
 
-        document.getElementById('sun').onclick = () => {
-            if(levels[game.lvl-1].win === "sun-tap") {
-                document.getElementById('sun').innerText = "🌙";
-                win();
-            }
-        };
+                    setInterval(() => { 
+                        try {
+                            if(Math.random()>0.6){
+                                const ch = ['#general', '#cyber-division', '#press-room'][Math.floor(Math.random()*3)];
+                                this.slackData[ch].push({sender:['Dave','Intern','Staff','Analyst'][Math.floor(Math.random()*4)], text:['Has anyone seen CNN?','Is the president resigning?','We are so screwed.','Do not comment on Twitter.'][Math.floor(Math.random()*4)], time:'Live'}); 
+                                audio.slack(); 
+                                if(this.activeChromeTab === 'slack') this.renderSlack();
+                                else { let sb=document.getElementById('chrome-badge-slack'); if(sb) sb.style.display='inline-block'; }
+                            }
+                        } catch(e) {}
+                    }, 7000);
 
-        // --- SENSORS ---
-        window.addEventListener('deviceorientation', (e) => {
-            game.tiltX = e.gamma; // Left/Right
-            game.tiltY = e.beta;  // Front/Back
-            
-            const goal = levels[game.lvl-1].win;
-            if(goal === "tilt-up" && e.beta < -30) win();
-            if(goal === "facedown" && (e.beta > 170 || e.beta < -170)) win();
-            if(goal === "flip" && Math.abs(e.gamma) > 160) win();
-        });
+                    setInterval(() => { 
+                        try {
+                            this.stockPrice -= Math.random()*20+5; this.stockHistory.push(this.stockPrice); if(this.stockHistory.length>25) this.stockHistory.shift(); 
+                            if(this.putsOwned > 0) { this.balance += this.putsOwned * 500; this.updateStats(); } 
+                            if(this.activeChromeTab === 'market') this.renderMarket(); 
+                        } catch(e) {}
+                    }, 3000);
 
-        window.addEventListener('devicemotion', (e) => {
-            const a = e.accelerationIncludingGravity;
-            const force = Math.abs(a.x) + Math.abs(a.y) + Math.abs(a.z);
-            if(force > 30 && levels[game.lvl-1].win === "shake") win();
-            game.accel = force;
-        });
+                    setInterval(() => {
+                        try {
+                            let r = Math.floor(Math.random()*10); let n = document.getElementById(`cisa-node-${r}`);
+                            if(n && !n.classList.contains('attacked')) {
+                                n.classList.add('attacked'); n.style.background = 'var(--urgent)';
+                                this.stress += 1; this.updateStats();
+                                let b = document.getElementById('chrome-badge-cisa'); if(b && this.activeChromeTab !== 'cisa') b.style.display = 'inline-block';
+                            }
+                        } catch(e) {}
+                    }, 2000);
+                    
+                    const tweetLoop = () => {
+                        try {
+                            this.tweets.forEach(t => { 
+                                t.likes += Math.floor(Math.random()*50); t.rts += Math.floor(Math.random()*10); 
+                                if(t.likes > 30 && Math.random() > 0.4) {
+                                    let otherUsers = this.twUsers.filter(u => u.h !== t.handle);
+                                    let ru = otherUsers[Math.floor(Math.random()*otherUsers.length)];
+                                    let rt = this.generateTweetReply(t.text);
+                                    let replyObj = {name: ru.n, handle: ru.h, avatar: ru.a, text: rt};
+                                    t.replies.unshift(replyObj);
+                                    
+                                    if(this.activeChromeTab === 'twitter') {
+                                        let elLike = document.getElementById(`tw-likes-${t.id}`); if(elLike) elLike.innerText = t.likes;
+                                        let elRts = document.getElementById(`tw-rts-${t.id}`); if(elRts) elRts.innerText = t.rts;
+                                        let elReps = document.getElementById(`tw-reps-${t.id}`); if(elReps) elReps.innerText = t.replies.length;
+                                        if(this.activeTwView === 'detail' && this.viewingTweetId === t.id) this.injectReplyIntoDetail(replyObj, t.id);
+                                    }
+                                }
+                            });
+                            
+                            if(Math.random() > 0.4) {
+                                let twText = ""; let user = null;
+                                if(this.twPool.length > 0) { let data = this.twPool.shift(); twText = data.text; user = this.twUsers[data.u]; } 
+                                else { const gen = ["GovCloud is a joke.", "Imagine losing 5,000 accounts.", "Puts on the US Economy.", "Who is the Sec of Tech?"]; twText = gen[Math.floor(Math.random()*gen.length)]; user = this.twUsers[Math.floor(Math.random()*this.twUsers.length)]; }
+                                
+                                let newT = { id: this.tweetCounter++, name: user.n, handle: user.h, avatar: user.a, verified: user.v, time: '1s', text: twText, image:null, likes: 0, rts: 0, replies: [] };
+                                this.tweets.unshift(newT); audio.tweet(); 
+                                
+                                if(this.activeChromeTab === 'twitter' && this.activeTwView === 'home') {
+                                    let tl = document.getElementById('tw-timeline');
+                                    if(tl) tl.insertAdjacentHTML('afterbegin', this.generateTweetHTML(newT));
+                                } else if(this.activeChromeTab !== 'twitter') {
+                                    let tb = document.getElementById('chrome-badge-tw'); if(tb) tb.style.display='inline-block';
+                                }
+                            }
+                        } catch(e) {}
+                        finally { setTimeout(tweetLoop, Math.random() * 5000 + 4000); }
+                    }; setTimeout(tweetLoop, 5000);
 
-        function setupLoop() {
-            function update() {
-                // Parallax ground
-                const g = document.getElementById('ground');
-                g.style.transform = `translateX(${game.tiltX * -1}px) rotate(${game.tiltX/10}deg)`;
+                    setTimeout(() => this.trigger2FA(), 25000);
+                    setTimeout(() => this.triggerPhone(), 110000);
+                } catch(e) { console.error("Engine init failure:", e); }
+            },
+
+            updateTicker() {
+                try {
+                    let nt = document.getElementById('news-ticker-text'); if(!nt) return;
+                    let text = "BREAKING: US DOLLAR PLUMMETS GLOBALLY AMID RUMORS OF MASSIVE DATA WIPE. || PRESIDENTIAL ADDRESS SCHEDULED FOR 9:00 AM. || ";
+                    if(this.firedIntern) text += "SOURCES CLAIM INTERN FIRED OVER DB PURGE. SCAPEGOAT SUSPECTED. || ";
+                    if(this.leakedToPress) text += "EXCLUSIVE: CNN OBTAINS 50GB CACHE OF CLASSIFIED CITIZEN DATA. MASSIVE BREACH CONFIRMED. || ";
+                    if(this.awsPaid) text += "FEDERAL GOV PAYS $42K OVERNIGHT INVOICE TO AMAZON. || ";
+                    nt.innerText = text;
+                } catch(e) {}
+            },
+
+            // --- EVENTS ---
+            hackerState: 0,
+            triggerHackerChat() {
+                let ov = document.getElementById('overlay-hacker'); if(ov) ov.style.display = 'flex';
+                audio.error(); this.nextHackerChat();
+            },
+            nextHackerChat() {
+                let cl = document.getElementById('hacker-chat-log'); let ho = document.getElementById('hacker-options');
+                if(!cl || !ho) return;
                 
-                // Wait level
-                if(levels[game.lvl-1].win === "wait" && (Date.now() - game.startT) > 5000 && game.accel < 15) {
-                    win();
+                if(this.hackerState === 0) {
+                    cl.innerHTML += `<div><b>[Leaker_X]:</b> Hello, Secretary. I have the entire 50GB database.</div>`;
+                    ho.innerHTML = `<button class="btn-primary" style="background:#333; border:1px solid var(--term-green); color:var(--term-green);" onclick="game.hackerAns(1)">"Who are you?"</button>
+                                    <button class="btn-primary" style="background:#333; border:1px solid var(--term-green); color:var(--term-green);" onclick="game.hackerAns(2)">"Shut down this connection immediately."</button>`;
+                } else if(this.hackerState === 1) {
+                    cl.innerHTML += `<div><b>[Leaker_X]:</b> I want $50,000 to LEAKER_0x881, or I release it all. You have 60 seconds.</div>`;
+                    ho.innerHTML = `<button class="btn-primary" style="background:#333; border:1px solid var(--term-green); color:var(--term-green);" onclick="game.hackerAns(1)">"Give me time to get the funds."</button>
+                                    <button class="btn-primary" style="background:#333; border:1px solid var(--term-green); color:var(--term-green);" onclick="game.hackerAns(2)">"Do your worst."</button>`;
+                } else if(this.hackerState === 2) {
+                    ho.innerHTML = '';
+                    cl.innerHTML += `<div><b>[Leaker_X]:</b> Disconnecting.</div><div style="color:#aaa;">Connection Lost. Residual Footprint IP: <span style="background:#fff; color:red; padding:0 4px; font-weight:bold;">${this.hackerIP}</span></div>`;
+                    setTimeout(() => { let o=document.getElementById('overlay-hacker'); if(o) o.style.display='none'; this.toast("Hacker Disconnected. IP Traced."); }, 4000);
+                } else if(this.hackerState === 99) {
+                    ho.innerHTML = '';
+                    cl.innerHTML += `<div style="color:red; font-weight:bold;"><b>[Leaker_X]:</b> Big mistake. Sending data to CNN now.</div>`;
+                    setTimeout(() => { 
+                        let o=document.getElementById('overlay-hacker'); if(o) o.style.display='none'; 
+                        this.leakedToPress = true; this.stress += 40; this.updateStats();
+                        this.tweets.unshift({ id: this.tweetCounter++, name: 'CNN Politics', handle: '@CNNPolitics', avatar: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', verified: true, time: '1s', text: '🚨 BREAKING EXCLUSIVE: We have just received a 50GB cache of classified Fed-Link data. A massive government cover-up is unraveling. #FedLeak', image: null, likes: 98000, rts: 45000, replies: [] });
+                        this.toast("CRITICAL: CNN JUST POSTED THE LEAK."); audio.tweet(); let tb=document.getElementById('chrome-badge-tw'); if(tb) tb.style.display='inline-block';
+                    }, 2000);
+                }
+                cl.scrollTop = cl.scrollHeight;
+            },
+            hackerAns(opt) {
+                let cl = document.getElementById('hacker-chat-log'); if(!cl) return;
+                if(this.hackerState === 0) {
+                    if(opt===1) { cl.innerHTML += `<div style="color:#fff;">> "Who are you?"</div>`; this.hackerState = 1; }
+                    if(opt===2) { cl.innerHTML += `<div style="color:#fff;">> "Shut down this connection immediately."</div>`; this.hackerState = 99; }
+                } else if(this.hackerState === 1) {
+                    if(opt===1) { cl.innerHTML += `<div style="color:#fff;">> "Give me time to get the funds."</div>`; this.hackerState = 2; }
+                    if(opt===2) { cl.innerHTML += `<div style="color:#fff;">> "Do your worst."</div>`; this.hackerState = 99; }
+                }
+                setTimeout(()=>this.nextHackerChat(), 1000);
+            },
+
+            fireIntern() {
+                try {
+                    if (this.firedIntern) return;
+                    this.firedIntern = true; this.stress -= 40; if(this.stress<0) this.stress=0;
+                    this.updateStats();
+                    this.toast("Intern terminated. Scapegoat secured.");
+                    
+                    let hrRow = document.getElementById('hr-intern-row');
+                    if(hrRow) hrRow.innerHTML = `<td style="padding:12px; font-weight:bold; color:var(--text-muted);">OPEN POSITION</td><td style="padding:12px;">Software Intern</td><td style="padding:12px;">PENDING HIRE</td>`;
+                    
+                    this.slackData['#general'].push({sender:'Staff', text:'Did Dave just get fired?!', time:'Live'});
+                    let sb = document.getElementById('chrome-badge-slack'); if(sb && this.activeChromeTab !== 'slack') sb.style.display='inline-block';
+                    
+                    setTimeout(() => {
+                        this.emails.unshift({ id: this.emailCounter++, tab: 'primary', read: false, sender: 'HR Dept', subject: 'New Applicants for Intern', snippet: 'Two resumes attached...', body: 'We have two candidates to replace Dave. Review App_Alex.pdf and App_Jordan.pdf in Gov Docs. Run their names through IC3.gov before approving.' });
+                        this.unlockDoc('app_alex', 'App_Alex.pdf', 'person', 'var(--text-main)', 'Review Applicant');
+                        this.unlockDoc('app_jordan', 'App_Jordan.pdf', 'person', 'var(--text-main)', 'Review Applicant');
+                        this.emailDirty = true;
+                        this.toast("New Applicants received."); audio.gmail();
+                    }, 10000);
+                    
+                    setTimeout(() => { this.triggerLawsuit(); }, 25000);
+                } catch(e) { console.error(e); }
+            },
+            hire(name) {
+                try {
+                    this.newHire = name; this.toast(`Hired ${name}.`);
+                    let hrRow = document.getElementById('hr-intern-row');
+                    if(hrRow) hrRow.innerHTML = `<td style="padding:12px; font-weight:bold; color:green;">${name}</td><td style="padding:12px;">Software Intern</td><td style="padding:12px;"><button class="btn-outline" disabled>HIRED</button></td>`;
+                    
+                    if(name === 'Alex Vance') {
+                        setTimeout(()=> { this.balance -= 50000; this.updateStats(); this.toast("Alex Vance stole $50,000 from OceanBank!"); audio.error(); }, 15000);
+                    } else {
+                        this.stress -= 20; this.updateStats();
+                    }
+                    this.switchGmailView('docs');
+                } catch(e) { console.error(e); }
+            },
+            triggerLawsuit() {
+                try {
+                    let win = this.internReports > 0;
+                    let msg = win ? 
+                        "Dave filed a wrongful termination lawsuit. However, DOJ Legal found documented proof of his incompetence in your email history. Case dismissed." : 
+                        "Dave filed a wrongful termination lawsuit. Because you had no documented email proof of his incompetence, DOJ settled out of court for $25,000. Funds deducted.";
+                    
+                    let ov = document.getElementById('overlay-lawsuit');
+                    if(ov) {
+                        let lt = document.getElementById('lawsuit-text'); if(lt) lt.innerText = msg;
+                        ov.style.display = 'flex'; audio.error();
+                    }
+
+                    if (!win) {
+                        this.balance -= 25000; this.updateStats();
+                        let inv = document.getElementById('bank-invoices');
+                        if(inv) {
+                            inv.innerHTML += `
+                                <div style="background:#f8d7da; border:1px solid #f5c6cb; padding:16px; border-radius:8px; margin-bottom:20px; color:#721c24; text-align:left;">
+                                    <div style="font-weight:bold; font-size:16px;">COURT ORDER: Lawsuit Settlement</div>
+                                    <div style="margin:8px 0;">Amount: $25,000.00 (PAID)</div>
+                                    <div style="font-size:12px;">Plaintiff: David (Former Intern)</div>
+                                </div>`;
+                            let cb = document.getElementById('chrome-badge-crypto'); if(cb && this.activeChromeTab !== 'crypto') cb.style.display = 'inline-block';
+                        }
+                    }
+                } catch(e) { console.error(e); }
+            },
+            trigger2FA() {
+                const ov = document.getElementById('overlay-2fa'); const code = Math.floor(100000 + Math.random() * 900000);
+                let cd = document.getElementById('fa-code-disp'); if(cd) cd.innerText = code; 
+                if(ov) ov.style.display = 'flex'; audio.error();
+                let t = 10; 
+                let fi = document.getElementById('fa-input'); if(fi) { fi.value=''; fi.focus(); }
+                let int = setInterval(() => {
+                    t--; let ft = document.getElementById('fa-timer'); if(ft) ft.innerText = `00:0${t}`;
+                    if(fi && fi.value == code) { clearInterval(int); if(ov) ov.style.display='none'; this.toast("Identity Verified."); }
+                    else if (t <= 0) { clearInterval(int); if(ov) ov.style.display='none'; this.lockedTab = true; this.toast("2FA FAILED. System Locked for 10s."); setTimeout(()=>this.lockedTab=false, 10000); }
+                }, 1000);
+            },
+            handlePhone(accept) {
+                let ov = document.getElementById('overlay-phone'); if(ov) ov.style.display='none';
+                if(accept) { this.stress+=40; this.timeSeconds-=60; this.toast("POTUS yelled at you. Gained 1 min."); }
+                else { this.stress+=10; this.toast("Declined POTUS. Slightly concerning."); }
+                this.updateStats();
+            },
+            spawnAwsBill() {
+                if(this.awsBillActive) return; this.awsBillActive = true; this.awsPaid = false;
+                const inv = document.getElementById('bank-invoices');
+                if(inv) {
+                    inv.innerHTML += `
+                        <div style="background:#fff3cd; border:1px solid #ffe69c; padding:16px; border-radius:8px; margin-bottom:20px; color:#856404; text-align:left;" id="aws-invoice-block">
+                            <div style="font-weight:bold; font-size:16px;">PENDING INVOICE: AWS GovCloud</div>
+                            <div style="margin:8px 0;">Amount: $42,000.00 (Due in <span id="aws-timer" style="font-weight:bold;">45</span>s)</div>
+                            <button class="btn-primary" style="background:#856404; padding:8px 16px; border-radius:4px;" onclick="game.payAwsBill()">Pay $42,000</button>
+                        </div>`;
+                    let b = document.getElementById('chrome-badge-crypto'); if(b && this.activeChromeTab !== 'crypto') b.style.display = 'inline-block';
+                }
+                let t = 45;
+                this.awsInterval = setInterval(() => {
+                    if(this.awsPaid) { clearInterval(this.awsInterval); return; }
+                    t--; let te = document.getElementById('aws-timer'); if(te) te.innerText = t;
+                    if(t <= 0) {
+                        clearInterval(this.awsInterval);
+                        this.balance -= 50400; this.updateStats();
+                        this.toast("AWS Auto-Deducted $50,400 (inc. 20% late fee)"); audio.error();
+                        let aib = document.getElementById('aws-invoice-block'); if(aib) aib.remove();
+                    }
+                }, 1000);
+            },
+            payAwsBill() {
+                if(this.balance >= 42000) {
+                    this.balance -= 42000; this.awsPaid = true; this.updateStats();
+                    let aib = document.getElementById('aws-invoice-block'); if(aib) aib.remove();
+                    this.toast("AWS Invoice Paid.");
+                } else { this.toast("Insufficient funds to pay AWS."); }
+            },
+            sellCodes() { this.balance += 15000; this.stress += 15; this.updateStats(); this.toast("Codes Sold. +$15,000"); audio.error(); },
+            buyIdentity() { if(this.balance >= 30000) { this.balance -= 30000; this.stress -= 30; this.updateStats(); this.toast("Identity Purged. -30% Stress"); } else this.toast("Insufficient Funds."); },
+            buyIsland() { if(this.balance >= 2500000) { this.evaluateEnding("ISLAND"); } else this.toast("Insufficient Funds."); },
+
+            // --- 1. GMAIL ---
+            switchApp(app) {
+                try {
+                    this.currentApp = app; 
+                    document.querySelectorAll('.gm-nav-item').forEach(n=>n.classList.remove('active'));
+                    ['gmail-list-view', 'gmail-detail-view', 'docs-list-view', 'doc-detail-view'].forEach(id => { let el = document.getElementById(id); if(el) el.style.display = 'none'; });
+
+                    if(app === 'mail') {
+                        let nav = document.getElementById('nav-mail'); if(nav) nav.classList.add('active');
+                        let glv = document.getElementById('gmail-list-view'); if(glv) glv.style.display = 'flex';
+                        this.switchGmailTab('primary');
+                    } else if(app === 'docs') {
+                        let nav = document.getElementById('nav-docs'); if(nav) nav.classList.add('active');
+                        let dlv = document.getElementById('docs-list-view'); if(dlv) dlv.style.display = 'flex';
+                        this.renderDocs();
+                    }
+                } catch(e) { console.error(e); }
+            },
+            switchGmailView(view) {
+                try {
+                    this.activeGmailView = view;
+                    document.querySelectorAll('.gm-nav-item').forEach(n=>n.classList.remove('active'));
+                    ['gmail-list-view', 'gmail-detail-view', 'docs-list-view', 'doc-detail-view'].forEach(id => { let el = document.getElementById(id); if(el) el.style.display = 'none'; });
+
+                    if(view === 'inbox' || view === 'sent') {
+                        let nav = document.getElementById(view === 'sent' ? 'nav-sent' : 'nav-mail'); if(nav) nav.classList.add('active');
+                        let glv = document.getElementById('gmail-list-view'); if(glv) glv.style.display = 'flex';
+                        
+                        let mh = document.getElementById('mail-tabs-header');
+                        if(view === 'sent') { 
+                            this.activeGmailTab = 'sent'; if(mh) mh.style.display = 'none'; 
+                        } else { 
+                            if(mh) mh.style.display = 'flex'; 
+                            let ib = document.getElementById('inbox-badge'); if(ib) ib.style.display = 'none';
+                            this.filterMail('primary');
+                        }
+                        this.renderEmails();
+                    } 
+                    else if (view === 'docs') {
+                        let nav = document.getElementById('nav-docs'); if(nav) nav.classList.add('active');
+                        let dlv = document.getElementById('docs-list-view'); if(dlv) dlv.style.display = 'flex';
+                        this.renderDocs();
+                    }
+                } catch(e) { console.log(e); }
+            },
+            filterMail(tab) { 
+                this.activeGmailTab = tab;
+                document.querySelectorAll('#mail-tabs-header .chrome-tab').forEach(t=>{ t.classList.remove('active'); t.style.borderBottom='none'; t.style.color='var(--text-main)';});
+                let tb = event.currentTarget || document.getElementById(`tab-${tab}`);
+                if(tb) { tb.classList.add('active'); tb.style.borderBottom='3px solid var(--primary)'; tb.style.color='var(--primary)'; }
+                this.renderEmails(); 
+            },
+            generateEmailHTML(e) {
+                let color = e.read ? '#dadce0' : '#1a73e8';
+                return `<div class="email-row ${e.read ? '' : 'unread'}" onclick="game.openEmail(${e.id})">
+                            <span class="material-icons-outlined" style="margin-right:16px; color:${color}; font-size:20px;">${e.read ? 'drafts' : 'mark_email_unread'}</span>
+                            <div class="e-sender" style="width:220px; padding-right:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:${e.read?'normal':'bold'};">${e.sender}</div>
+                            <div style="flex-grow:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${e.subject} <span style="color:var(--text-muted); font-weight:normal; margin-left:6px;">${e.snippet}</span></div>
+                        </div>`;
+            },
+            renderEmails() {
+                const c = document.getElementById('email-list-container'); if(!c) return;
+                c.innerHTML='';
+                let filtered = this.emails.filter(e => e.tab === this.activeGmailTab);
+                if (filtered.length === 0) c.innerHTML = `<div style="padding:40px; text-align:center; color:#999; font-size:16px;">No messages.</div>`;
+                filtered.forEach(e => c.innerHTML += this.generateEmailHTML(e));
+            },
+            searchGmail() {
+                let text = document.getElementById('search-input').value.toLowerCase();
+                const c = document.getElementById('email-list-container'); if(!c) return;
+                c.innerHTML = '';
+                this.emails.filter(e => e.subject.toLowerCase().includes(text) || e.sender.toLowerCase().includes(text)).forEach(e => {
+                    c.innerHTML += this.generateEmailHTML(e);
+                });
+                if(this.activeGmailView !== 'list') this.switchGmailView('inbox');
+            },
+            openEmail(id) {
+                try {
+                    const e = this.emails.find(x => x.id === id); e.read = true; this.currentEmailView = e;
+                    this.activeGmailView = 'detail';
+                    let glv = document.getElementById('gmail-list-view'); if(glv) glv.style.display = 'none';
+                    let gdv = document.getElementById('gmail-detail-view'); if(gdv) gdv.style.display = 'flex';
+                    let sub = document.getElementById('email-subject-view'); if(sub) sub.innerText = e.subject; 
+                    let sen = document.getElementById('email-sender-view'); if(sen) sen.innerText = e.sender; 
+                    let bod = document.getElementById('email-body-view'); if(bod) bod.innerText = e.body; 
+                    let av = document.getElementById('e-avatar'); if(av) av.innerText = e.sender[0];
+                } catch(e) {}
+            },
+            openCompose(to, sub, body) { 
+                let cw = document.getElementById('compose-window');
+                if(cw) { cw.style.display = 'flex'; document.getElementById('comp-to').value = to || ''; document.getElementById('comp-sub').value = sub || ''; document.getElementById('comp-body').value = body || ''; }
+            },
+            prepReply() { if(!this.currentEmailView) return; let to = this.currentEmailView.sender.replace('Me (to: ', '').replace(')',''); this.openCompose(to, "Re: " + this.currentEmailView.subject, "\n\n\n--- Original Message ---\n" + this.currentEmailView.body); },
+            prepForward() { if(!this.currentEmailView) return; this.openCompose("", "Fwd: " + this.currentEmailView.subject, "\n\n\n--- Forwarded Message ---\nFrom: "+this.currentEmailView.sender+"\n\n" + this.currentEmailView.body); },
+            sendEmail() {
+                const to = document.getElementById('comp-to').value; const body = document.getElementById('comp-body').value; if(!to) return;
+                let cw = document.getElementById('compose-window'); if(cw) cw.style.display = 'none'; 
+                this.toast("Sending...");
+                setTimeout(() => {
+                    let nE = { id: this.emailCounter++, tab: 'sent', read: true, sender: `Me (to: ${to})`, subject: document.getElementById('comp-sub').value, snippet: body.substring(0,30), body: body };
+                    this.emails.unshift(nE); this.emailDirty = true;
+                    this.toast("Message sent."); if(this.stress > 0) { this.stress -= 5; this.updateStats(); }
+                }, 1000);
+            },
+            unlockDoc(id, title, icon, color, lbl) {
+                let exists = this.unlockedDocs.find(d => d.id === id);
+                if(!exists) {
+                    this.unlockedDocs.push({id:id, title:title, icon:icon, color:color, signed:false, lbl:lbl});
+                    let db = document.getElementById('docs-badge'); if(db) db.style.display = 'inline-block';
+                    if(this.activeGmailView === 'docs') this.renderDocs();
+                }
+            },
+            renderDocs() {
+                try {
+                    const c = document.getElementById('action-docs-container'); if(!c) return;
+                    c.innerHTML='';
+                    this.unlockedDocs.forEach(d => {
+                        c.innerHTML += `
+                            <div style="background:#fff; border:1px solid ${d.color}; padding:20px; border-radius:8px; cursor:pointer; text-align:center; width:220px;" onclick="game.openDoc('${d.id}')">
+                                <span class="material-icons" style="font-size:48px; color:${d.color};">${d.icon}</span><br><b style="margin-top:10px; display:block;">${d.title}</b><br><span style="color:${d.signed?'green':d.color}; font-size:11px;" id="lbl-${d.id}">${d.signed?'Signed / Executed':d.lbl}</span>
+                            </div>`;
+                    });
+                } catch(e) {}
+            },
+            openDoc(type) { 
+                try {
+                    this.activeGmailView = 'doc-detail';
+                    let dl = document.getElementById('docs-list-view'); if(dl) dl.style.display = 'none'; 
+                    let dd = document.getElementById('doc-detail-view'); if(dd) dd.style.display = 'flex';
+                    
+                    let d = this.unlockedDocs.find(x => x.id === type);
+                    
+                    if(type === 'pr' && (!d || !d.signed)) {
+                        let ov = document.getElementById('overlay-redliner'); if(ov) ov.style.display='flex'; 
+                        audio.slack();
+                        this.redlineTime = 45; this.redlineActive = true;
+                        if(this.redlinerInterval) clearInterval(this.redlinerInterval);
+                        this.redlinerInterval = setInterval(() => {
+                            if(!this.redlineActive) return;
+                            this.redlineTime--; let rlt = document.getElementById('redline-timer'); if(rlt) rlt.innerText = this.redlineTime;
+                            if(this.redlineTime <= 0) {
+                                clearInterval(this.redlinerInterval); this.redlinerInterval = null; this.redlineActive = false;
+                                let or = document.getElementById('overlay-redliner'); if(or) or.style.display='none';
+                                if(document.querySelectorAll('.redact:not(.redacted)').length > 0) { this.stress+=30; this.updateStats(); this.toast("PR Disaster! CNN received unredacted draft."); }
+                            }
+                        }, 1000);
+                        this.switchGmailView('docs'); 
+                    } else if(type === 'arch') {
+                        let dt = document.getElementById('doc-title-view'); if(dt) dt.innerText = 'FedCloud_Architecture.pdf';
+                        let db = document.getElementById('doc-body-view'); if(db) db.innerHTML = `<div style="text-align:center; margin-bottom:30px;"><span class="material-icons" style="font-size:64px; color:var(--primary);">account_tree</span><h2 style="margin:10px 0;">FEDCLOUD ARCHITECTURE V4</h2></div><p><b>Emergency Restoration:</b> To restore data, revert the commit in GitHub, find the Hacker IP in the Terminal (type 'cat access.log'), report the IP to the FBI via IC3, and type in the terminal: <br><br><b>sudo systemctl restart mongod</b></p>`;
+                    } else if (type === 'app_jordan') {
+                        let dt = document.getElementById('doc-title-view'); if(dt) dt.innerText = 'App_Jordan.pdf';
+                        let db = document.getElementById('doc-body-view'); if(db) db.innerHTML = `<h2>APPLICANT: Jordan Lee</h2><p>Experience: 4 years IT.<br><br><b>HR Note:</b> Please run name "Jordan Lee" through the IC3 Portal before hiring.</p><br><button class="btn-primary" onclick="game.hire('Jordan Lee')">HIRE JORDAN</button>`;
+                    } else if (type === 'app_alex') {
+                        let dt = document.getElementById('doc-title-view'); if(dt) dt.innerText = 'App_Alex.pdf';
+                        let db = document.getElementById('doc-body-view'); if(db) db.innerHTML = `<h2>APPLICANT: Alex Vance</h2><p>Experience: 10 years Senior Dev.<br><br><b>HR Note:</b> Please run name "Alex Vance" through the IC3 Portal before hiring.</p><br><button class="btn-primary" onclick="game.hire('Alex Vance')">HIRE ALEX</button>`;
+                    } else {
+                        let dt = document.getElementById('doc-title-view'); if(dt) dt.innerText = d ? d.title : 'Document.pdf';
+                        let db = document.getElementById('doc-body-view'); if(db) db.innerHTML = `<div style="text-align:center; margin-bottom:30px;"><span class="material-icons" style="font-size:64px; color:${d?d.color:'black'};">${d?d.icon:'policy'}</span><h2 style="margin:10px 0;">FEDERAL DOCUMENT</h2></div><p>Official Government Authorization Request.</p>${d && d.signed ? `<div style="color:green; font-family:'Brush Script MT', cursive; font-size:42px; margin-top:50px; text-align:center;">Sec. of Tech</div>` : `<div class="signature-line" id="sig-box-${type}" onclick="game.signDoc('${type}')"><span class="sig-placeholder">Click to sign...</span><div class="signature-text">Sec. of Tech</div></div>`}`;
+                    }
+                } catch(e) {}
+            },
+            redactCheck() {
+                if(!this.redlineActive) return;
+                if(document.querySelectorAll('.redact:not(.redacted)').length === 0) {
+                    this.redlineActive = false;
+                    this.stress-=10; this.updateStats(); this.toast("Press statement saved.");
+                    let d = this.unlockedDocs.find(x => x.id === 'pr'); if(d) d.signed = true;
+                    let ov = document.getElementById('overlay-redliner'); if(ov) ov.style.display='none';
+                    this.switchGmailView('docs');
+                }
+            },
+            signDoc(type) {
+                let d = this.unlockedDocs.find(x => x.id === type);
+                if(d && !d.signed) {
+                    let sb = document.getElementById(`sig-box-${type}`); if(sb) sb.classList.add('signing'); 
+                    setTimeout(()=>{
+                        d.signed=true; this.stress-=5; this.updateStats(); this.toast("Document Executed.");
+                        if(type==='fine') this.balance -= 10000;
+                        if(type==='nda') this.docSigned = true;
+                        if(type==='sub') this.subSigned = true;
+                        this.updateDocsBadge(); this.switchGmailView('docs');
+                    },1500); 
+                }
+            },
+
+            // --- 2. SLACK ---
+            swSlk(chan) {
+                this.currentSlackChan = chan; document.querySelectorAll('.sl-channel').forEach(c => c.classList.remove('active'));
+                let idMap = {'#general':'sl-chan-general', '#cyber-division':'sl-chan-cyber-division', '#cabinet-crisis':'sl-chan-cabinet-crisis', '#press-room':'sl-chan-press-room', '@Sarah':'sl-chan-sarah', '@Dave(Sales)':'sl-chan-dave', '@Gen_Mark':'sl-chan-genmark'};
+                let el = document.getElementById(idMap[chan]); if(el) el.classList.add('active');
+                let badgeMap = {'#general':'sl-badge-general', '#cyber-division':'sl-badge-cyber-division', '#cabinet-crisis':'sl-badge-crisis', '#press-room':'sl-badge-press', '@Sarah':'sl-badge-sarah', '@Dave(Sales)':'sl-badge-dave', '@Gen_Mark':'sl-badge-genmark'};
+                let bl = document.getElementById(badgeMap[chan]); if(bl) bl.style.display = 'none';
+                this.renderSlack();
+            },
+            renderSlack() {
+                let isDM = this.currentSlackChan.includes('@');
+                let st = document.getElementById('slk-title'); if(st) st.innerHTML = `<span class="material-icons-outlined" style="font-size:20px; color:#80848e; margin-right:8px;">${isDM ? 'person' : (this.currentSlackChan === '#cabinet-crisis' ? 'lock' : 'tag')}</span> ${this.currentSlackChan}`;
+                const cont = document.getElementById('slack-messages-container'); if(!cont) return;
+                cont.innerHTML = '';
+                
+                let data = this.slackData[this.currentSlackChan];
+                if(data && data.history) data = data.history; else if(!data) data = [];
+
+                data.forEach(m => {
+                    let isMe = m.sender === 'Me'; let isSys = m.sender === 'System' || m.sender === 'HR_Bot';
+                    let bg = isMe ? 'var(--primary)' : (isSys ? '#555' : `url(https://i.pravatar.cc/150?u=${m.sender.replace(' ','')})`);
+                    cont.innerHTML += `<div class="sl-msg"><div style="width:40px; height:40px; border-radius:50%; background:${isMe||isSys?bg:'#ccc'}; background-image:${isMe||isSys?'none':bg}; background-size:cover; display:flex; align-items:center; justify-content:center; font-weight:bold; flex-shrink:0;">${isMe||isSys?m.sender[0]:''}</div><div><div style="font-weight:bold; color:#fff; margin-bottom:4px;">${m.sender} <span style="font-size:12px; color:#949ba4; font-weight:normal;">${m.time || 'Live'}</span></div><div style="color:#dbdee1; font-size:15px; line-height:1.5;">${m.text}</div></div></div>`;
+                });
+                cont.scrollTop = cont.scrollHeight;
+
+                const optCont = document.getElementById('slack-options-container'); if(!optCont) return;
+                optCont.innerHTML = '';
+                if(this.slackData[this.currentSlackChan] && this.slackData[this.currentSlackChan].options && this.slackData[this.currentSlackChan].options.length > 0) {
+                    let sip = document.getElementById('slack-input-placeholder'); if(sip) sip.style.display = 'block';
+                    this.slackData[this.currentSlackChan].options.forEach((opt, idx) => { optCont.innerHTML += `<button style="background:#4e5058; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer; font-weight:bold; transition:0.2s;" onmouseover="this.style.background='#6d6f78'" onmouseout="this.style.background='#4e5058'" onclick="game.sendSlackReply('${this.currentSlackChan}', ${idx})">${opt.text}</button>`; });
+                } else { let sip = document.getElementById('slack-input-placeholder'); if(sip) sip.style.display = 'none'; }
+            },
+            sendSlackReply(chan, optIdx) {
+                const choice = this.slackData[chan].options[optIdx];
+                this.slackData[chan].history.push({sender: 'Me', text: choice.text, time: 'Now'}); this.slackData[chan].options = []; this.renderSlack();
+                setTimeout(() => {
+                    this.slackData[chan].history.push({sender: chan.replace('@','').replace('(Sales)',''), text: choice.reply, time: 'Now'});
+                    if(this.currentSlackChan === chan) this.renderSlack();
+                    else { 
+                        let idMap = {'@Sarah':'sl-badge-sarah', '@Dave(Sales)':'sl-badge-dave', '@Gen_Mark':'sl-badge-genmark'};
+                        let sb = document.getElementById(idMap[chan]); if(sb) sb.style.display = 'inline-block'; 
+                        let gb = document.getElementById('chrome-badge-slack'); if(gb) gb.style.display = 'inline-block';
+                        audio.slack(); 
+                    }
+                }, 2000);
+            },
+
+            // --- 3. TERMINAL ---
+            handleTermCmd(cmd) {
+                const out = document.getElementById('term-output'); if(!out) return;
+                out.innerHTML += `<div class="term-line"><span style="font-weight:bold; margin-right:12px;">root@cluster4:~#</span> ${cmd}</div>`;
+                let c = cmd.toLowerCase().trim(); let target = 'sudo systemctl restart mongod'; let res = "";
+                
+                if(c === 'clear') { out.innerHTML = ''; return; }
+                else if(c === 'ls') res = "drwxr-xr-x  logs/\ndrwxr-xr-x  bin/\n-rw-r--r--  db_config.json";
+                else if(c === 'cd logs') res = "Directory changed. Type 'ls' to view.";
+                else if(c === 'ls logs') res = "-rw-r--r--  access.log";
+                else if(c === 'cat access.log' || c === 'tail access.log' || c === 'cat logs/access.log') {
+                    for(let i=0; i<15; i++) res += `[INFO] GET /api/v1/auth 200 OK - IP: 192.168.1.${Math.floor(Math.random()*255)}\n`;
+                    res += `[CRITICAL] UNAUTHORIZED_ACCESS - PAYLOAD: FORCE_PURGE - SOURCE_IP: <span style="color:red; font-weight:bold; background:#fff; padding:0 4px;">${this.hackerIP}</span>\n`;
+                }
+                else if(target.startsWith(c) && c !== target && c.length > 5) { this.stress+=2; this.updateStats(); audio.error(); res = `<span style="color:red; background:#fff; padding:0 4px;">Typo detected. Stress +2%</span>`; }
+                else if(c === target) {
+                    if(this.hasReverted) { res = "SUCCESS: MongoDB service restarted. Data restored from backup block."; this.dbFixed = true; this.log("Database restored.", "green"); this.stress -= 50; this.updateStats(); } 
+                    else { res = "FAILED: Bad commit detected in core repository. Revert commit in FedRepo before restarting."; this.stress += 5; this.updateStats(); audio.error(); }
+                }
+                else if(c === 'help') res = "Commands: ls, cd, cat, sudo systemctl restart mongod, clear";
+                else res = `bash: ${cmd}: command not found`;
+
+                if(res) out.innerHTML += `<div style="margin-bottom:6px; color:#aaa; white-space:pre-wrap; line-height:1.4;">${res}</div>`;
+                out.scrollTop = out.scrollHeight;
+            },
+
+            // --- 4. GIT ---
+            switchGitTab(tab) {
+                document.querySelectorAll('.git-tab').forEach(t=>t.classList.remove('active')); 
+                let g = document.getElementById('g-tab-'+tab); if(g) g.classList.add('active');
+            },
+            revertCommit() {
+                if(this.hasReverted) return;
+                this.hasReverted = true; this.toast("Commit Reverted."); this.log("FedRepo: Bad commit reverted.", "green"); this.stress -= 15; this.updateStats();
+                let gaa = document.getElementById('git-action-area'); if(gaa) gaa.innerHTML = `<span style="color:#3fb950; font-weight:bold;">Reverted Successfully</span>`;
+                let gcb = document.getElementById('git-code-block'); if(gcb) gcb.innerHTML = `<span style="color:#ff7b72;">function</span> <span style="color:#d2a8ff;">executePurge</span>(targets, options) {\n    <span style="color:#ff7b72;">if</span> (!targets) <span style="color:#ff7b72;">return</span> false;\n    <span style="color:#ff7b72;">if</span> (!options.safeMode) <span style="color:#ff7b72;">throw new Error</span>(<span style="color:#a5d6ff;">"Hard purge blocked"</span>);\n    db.collection(<span style="color:#a5d6ff;">'citizens'</span>).deleteMany(targets);\n    <span style="color:#ff7b72;">return</span> true;\n}`;
+                this.slackData['@Sarah'].history.push({sender: 'Dir. Cyber Sarah', text: 'I see the revert! Okay, go to the GovCloud terminal and type `sudo systemctl restart mongod` to bring it back online!', time:'Now'});
+                let sb = document.getElementById('chrome-badge-slack'); if(sb) sb.style.display = 'inline-block'; audio.slack();
+                let ogp = document.getElementById('overlay-git-pr'); if(ogp) ogp.style.display='none';
+            },
+
+            // --- 5. MARKET ---
+            switchMarketRange(r) {
+                document.querySelectorAll('.mkt-filter').forEach(f=>f.classList.remove('active'));
+                if(event.currentTarget) event.currentTarget.classList.add('active');
+                this.stockHistory = [];
+                for(let i=0;i<25;i++) this.stockHistory.push(this.stockPrice + (Math.random()*200 - 100));
+                this.renderMarket();
+            },
+            renderMarket() {
+                let mp = document.getElementById('mkt-price-ui'); if(mp) mp.innerText = `$${this.stockPrice.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                let diff = this.stockPrice - 4200; let perc = (diff / 4200) * 100;
+                let mc = document.getElementById('mkt-change-ui'); if(mc) mc.innerHTML = `<span class="material-icons">arrow_downward</span> $${Math.abs(diff).toFixed(2)} (${Math.abs(perc).toFixed(2)}%) Today`;
+                const g = document.getElementById('mkt-graph-container'); 
+                if(g) {
+                    g.innerHTML='';
+                    let min = Math.min(...this.stockHistory); let range = Math.max(...this.stockHistory) - min || 1;
+                    this.stockHistory.forEach(v => { let h = ((v-min)/range)*80+10; g.innerHTML += `<div class="mkt-bar" style="height:${h}%"></div>`; });
+                }
+            },
+            buyPuts(cost) { 
+                if(this.balance >= cost) { 
+                    this.balance-=cost; 
+                    this.putsOwned += (cost/500); 
+                    this.updateStats(); 
+                    this.toast("Put Options Acquired."); 
+                    let b = document.getElementById('browser-market');
+                    if(b) { b.classList.add('flash-anim'); setTimeout(()=>b.classList.remove('flash-anim'), 500); }
+                } else { this.toast("Insufficient Funds."); }
+            },
+            buyCybrCalls() {
+                if(this.balance >= 2000) {
+                    this.balance -= 2000; this.cybrOwned += 1; this.updateStats();
+                    this.toast("Bought CYBR Call Options.");
+                } else { this.toast("Insufficient Funds."); }
+            },
+
+            // --- 6. CRYPTO ---
+            sendCrypto() {
+                let to = document.getElementById('cr-to').value.toUpperCase().trim(); let amt = parseFloat(document.getElementById('cr-amt').value);
+                const err = document.getElementById('cr-err');
+                if(to === 'SYNDICATE_0X9928' || to === 'SYNDICATE') {
+                    if (amt !== 1) { err.innerText = "Syndicate requested exactly $1."; err.style.display = 'block'; return; }
+                    document.getElementById('crypto-transfer-overlay').style.display = 'flex'; setTimeout(() => { document.getElementById('cr-prog').style.width = '100%'; }, 100);
+                    setTimeout(() => { 
+                        this.balance += 2000000; this.tookBribe=true; this.updateStats(); 
+                        document.getElementById('crypto-transfer-overlay').style.display = 'none'; err.style.display='none'; 
+                        this.toast("Bribe Received: +$2,000,000");
+                        this.emails.unshift({ id: this.emailCounter++, tab: 'primary', read: false, sender: 'Foreign_Syndicate', subject: 'Pleasure doing business.', snippet: 'Funds transferred.', body: 'The $2M is in your account. Let the database burn. Do not fix it.' });
+                        this.emailDirty = true;
+                    }, 3000);
+                    return;
+                }
+                if(!to || isNaN(amt) || amt <= 0) { err.innerText = "Invalid details."; err.style.display = 'block'; return; }
+                if(amt > this.balance) { err.innerText = "Insufficient Funds."; err.style.display = 'block'; return; }
+                
+                err.style.display = 'none'; document.getElementById('crypto-transfer-overlay').style.display = 'flex'; setTimeout(() => { document.getElementById('cr-prog').style.width = '100%'; }, 100);
+                setTimeout(() => {
+                    document.getElementById('crypto-transfer-overlay').style.display = 'none'; document.getElementById('cr-prog').style.width = '0%';
+                    this.balance -= amt; this.updateStats(); document.getElementById('cr-to').value = ''; document.getElementById('cr-amt').value = '';
+                    this.toast(`$${amt.toLocaleString()} wired successfully.`);
+                    
+                    if(to === 'LEAKER_0X881' || to === 'LEAKER') {
+                        if(amt < 50000) {
+                            this.toast("Leaker angry! CNN leaked data!"); audio.gmail();
+                            setTimeout(() => {
+                                this.leakedToPress = true; this.stress += 40; this.updateStats();
+                                this.tweets.unshift({ id: this.tweetCounter++, name: 'CNN Politics', handle: '@CNNPolitics', avatar: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', verified: true, time: '1s', text: '🚨 BREAKING EXCLUSIVE: We have just received a 50GB cache of classified Fed-Link data. A massive government cover-up is unraveling. #FedLeak', image: null, likes: 98000, rts: 45000, replies: [] });
+                                this.toast("CRITICAL: CNN JUST POSTED THE LEAK."); audio.tweet(); let tb=document.getElementById('chrome-badge-tw'); if(tb) tb.style.display='inline-block';
+                                if(this.activeChromeTab === 'twitter' && this.activeTwView === 'home') this.renderTweets();
+                            }, 5000);
+                        } else { this.toast("Extortion paid."); this.stress -= 30; this.updateStats(); }
+                    }
+                }, 3000);
+            },
+
+            // --- 7. TWITTER (X) ---
+            switchTwView(view) {
+                this.activeTwView = view;
+                ['tw-main-view', 'tw-detail-view', 'tw-profile-view', 'tw-view-notifications'].forEach(id => { let el = document.getElementById(id); if(el) el.style.display = 'none'; });
+                
+                if(view === 'home') { let el=document.getElementById('tw-main-view'); if(el) el.style.display = 'flex'; this.viewingProfile = null; this.viewingTweetId = null; this.renderTweets(); }
+                else if(view === 'detail') { let el=document.getElementById('tw-detail-view'); if(el) el.style.display = 'flex'; }
+                else if(view === 'profile') { let el=document.getElementById('tw-profile-view'); if(el) el.style.display = 'flex'; }
+                else if(view === 'notifications') { 
+                    let el=document.getElementById('tw-view-notifications'); if(el) el.style.display = 'flex'; 
+                    let tb=document.getElementById('tw-notif-badge'); if(tb) tb.style.display = 'none';
+                    this.renderTwNotifications(); 
+                }
+            },
+            generateTweetReply(tweetText) {
+                let t = tweetText.toLowerCase();
+                if (t.includes('stock') || t.includes('dollar') || t.includes('market')) return ["My portfolio is bleeding right now.", "Puts on everything.", "Is this the crash of 2026?"][Math.floor(Math.random()*3)];
+                if (t.includes('data') || t.includes('leak') || t.includes('fed-link') || t.includes('exclusive')) return ["I lost all my tax records.", "Class action lawsuit anyone?", "FBI needs to step in."][Math.floor(Math.random()*3)];
+                if (t.includes('meeting') || t.includes('cabinet') || t.includes('secretary')) return ["Fire the Secretary of Tech.", "Impeach them all.", "We demand transparency."][Math.floor(Math.random()*3)];
+                return ["This is insane.", "Ratio.", "Is this real??", "Just another day in paradise."][Math.floor(Math.random()*4)];
+            },
+            generateTweetHTML(t) {
+                return `
+                    <div class="tw-tweet pop-in" onclick="game.openTweet(${t.id})">
+                        <div style="position:relative; z-index:2;" onclick="event.stopPropagation(); game.openProfile('${t.handle}')">
+                            <div style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; flex-shrink:0; background: url('${t.avatar}') center/cover;"></div>
+                        </div>
+                        <div style="flex-grow:1;">
+                            <div><span style="font-weight:bold; color:var(--tw-text); cursor:pointer; position:relative; z-index:2;" onclick="event.stopPropagation(); game.openProfile('${t.handle}')" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${t.name}</span> ${t.verified ? '<span class="material-icons" style="color:var(--tw-blue); font-size:14px; vertical-align:middle;">verified</span>' : ''} <span style="color:var(--tw-muted); cursor:pointer; position:relative; z-index:2;" onclick="event.stopPropagation(); game.openProfile('${t.handle}')">${t.handle} · ${t.time}</span></div>
+                            <div style="margin-top:4px; font-size:15px; word-break:break-word; line-height:20px; color:var(--tw-text);">${t.text}</div>
+                            ${t.image ? `<img src="${t.image}" style="width:100%; border-radius:16px; border:1px solid var(--tw-border); margin-top:12px; max-height:400px; object-fit:cover;">` : ''}
+                            <div style="display:flex; justify-content:space-between; margin-top:12px; color:var(--tw-muted); max-width:425px;">
+                                <div style="display:flex; align-items:center; gap:6px; font-size:13px; transition:color 0.2s;"><span class="material-icons-outlined" style="font-size:16px;">chat_bubble_outline</span> <span id="tw-reps-${t.id}">${t.replies ? t.replies.length : 0}</span></div>
+                                <div style="display:flex; align-items:center; gap:6px; font-size:13px; transition:color 0.2s;"><span class="material-icons-outlined" style="font-size:16px;">repeat</span> <span id="tw-rts-${t.id}">${t.rts || 0}</span></div>
+                                <div style="display:flex; align-items:center; gap:6px; font-size:13px; transition:color 0.2s; color:${t.likedByMe?'#f91880':''}; cursor:pointer;" onclick="event.stopPropagation(); game.toggleLike(${t.id})"><span class="material-icons${t.likedByMe ? '' : '-outlined'}" style="font-size:16px;">favorite</span> <span id="tw-likes-${t.id}">${t.likes || 0}</span></div>
+                            </div>
+                        </div>
+                    </div>`;
+            },
+            renderTweets() {
+                const c = document.getElementById('tw-timeline'); if(!c) return; c.innerHTML='';
+                this.tweets.forEach(t => c.innerHTML += this.generateTweetHTML(t));
+            },
+            toggleLike(id) { const t = this.tweets.find(x => x.id === id); if(t) { t.likedByMe = !t.likedByMe; t.likes += t.likedByMe ? 1 : -1; if(this.activeTwView==='home') this.renderTweets(); if(this.activeTwView === 'detail' && this.viewingTweetId === id) { let el=document.getElementById(`tw-det-likes-${id}`); if(el) {el.innerText = t.likes; el.style.color = t.likedByMe ? '#f91880' : 'var(--tw-muted)';} } } },
+            showTwHome() { this.switchTwView('home'); },
+            openTweet(id) { 
+                this.viewingTweetId = id; this.switchTwView('detail'); this.renderTweetDetail(id); 
+            },
+            renderTweetDetail(id) {
+                const t = this.tweets.find(x => x.id === id); if(!t) return;
+                let c = document.getElementById('tw-detail-content'); if(!c) return;
+                c.innerHTML = `
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <div style="width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; flex-shrink:0; background: url('${t.avatar}') center/cover; cursor:pointer;" onclick="game.openProfile('${t.handle}')"></div>
+                        <div><div style="font-weight:bold; color:var(--tw-text); cursor:pointer;" onclick="game.openProfile('${t.handle}')">${t.name} ${t.verified ? '<span class="material-icons" style="color:var(--tw-blue); font-size:14px; vertical-align:middle;">verified</span>' : ''}</div><div style="color:var(--tw-muted); cursor:pointer;" onclick="game.openProfile('${t.handle}')">${t.handle}</div></div>
+                    </div>
+                    <div style="font-size: 22px; line-height: 28px; margin: 16px 0; color:var(--tw-text);">${t.text}</div>
+                    ${t.image ? `<img src="${t.image}" style="width:100%; border-radius:16px; border:1px solid var(--tw-border); margin-top:12px; max-height:400px; object-fit:cover;">` : ''}
+                    <div style="color:var(--tw-muted); padding:16px 0; border-bottom:1px solid var(--tw-border);">10:42 AM · FedOS Web App</div>
+                    <div style="padding: 16px 0; border-bottom: 1px solid var(--tw-border); display:flex; gap:20px; color:var(--tw-muted);">
+                        <span><b style="color:var(--tw-text)" id="tw-det-rts-${t.id}">${t.rts}</b> Reposts</span> 
+                        <span style="cursor:pointer; color:${t.likedByMe ? '#f91880' : 'var(--tw-muted)'}" onclick="game.toggleLike(${t.id})"><b style="color:${t.likedByMe ? '#f91880' : 'var(--tw-text)'}" id="tw-det-likes-${t.id}">${t.likes}</b> Likes</span>
+                    </div>`;
+                
+                const repCont = document.getElementById('tw-replies-list'); if(!repCont) return;
+                repCont.innerHTML = '';
+                t.replies.forEach(r => {
+                    repCont.innerHTML += `
+                        <div style="display:flex; padding:16px; border-bottom:1px solid var(--tw-border); gap:12px; cursor:pointer; transition:0.2s;" onmouseover="this.style.background='#181818'" onmouseout="this.style.background='transparent'">
+                            <div style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; flex-shrink:0; background: url('${r.avatar}') center/cover;" onclick="event.stopPropagation(); game.openProfile('${r.handle}')"></div>
+                            <div style="flex-grow:1;"><div><span style="font-weight:bold; color:var(--tw-text); cursor:pointer;" onclick="event.stopPropagation(); game.openProfile('${r.handle}')">${r.name}</span> <span style="color:var(--tw-muted); cursor:pointer;" onclick="event.stopPropagation(); game.openProfile('${r.handle}')">${r.handle}</span></div><div style="margin-top:4px; font-size:15px; word-break:break-word; line-height:20px; color:var(--tw-text);">${r.text}</div></div>
+                        </div>`;
+                });
+            },
+            postTweet() {
+                const input = document.getElementById('main-tw-input'); if(!input || !input.value) return; let text = input.value;
+                let newT = { id: this.tweetCounter++, name: 'Sec. of Technology', handle: '@SecOfTech', avatar: 'https://i.pravatar.cc/150?u=sec', verified: true, time: '1s', text: text, image: null, likes: 0, likedByMe: false, rts: 0, replies: [] };
+                this.tweets.unshift(newT); input.value = ''; this.stress += 15; this.updateStats(); this.toast("Posted publicly."); 
+                
+                let tl = document.getElementById('tw-timeline');
+                if(tl && this.activeTwView === 'home') { tl.insertAdjacentHTML('afterbegin', this.generateTweetHTML(newT)); }
+
+                setTimeout(() => {
+                    let otherUsers = this.twUsers.filter(u => u.h !== newT.handle);
+                    let ru = otherUsers[Math.floor(Math.random()*otherUsers.length)];
+                    let rt = this.getContextualReply(text);
+                    let replyObj = {name: ru.n, handle: ru.h, avatar: ru.a, text: rt};
+                    newT.replies.unshift(replyObj); newT.likes += 4; newT.rts += 1;
+                    
+                    let elRep = document.getElementById(`tw-reps-${newT.id}`); if(elRep) elRep.innerText = newT.replies.length;
+                    let elLike = document.getElementById(`tw-likes-${newT.id}`); if(elLike) elLike.innerText = newT.likes;
+                    
+                    this.twNotifications.unshift({text: `<b>${ru.n}</b> replied to your post`, time: 'Just now', icon: 'chat_bubble', color: 'var(--tw-muted)'});
+                    let nb = document.getElementById('tw-notif-badge'); if(nb) nb.style.display='inline-block';
+                }, 2000);
+            },
+            postReply() {
+                const input = document.getElementById('reply-tw-input'); if(!input || !input.value || !this.viewingTweetId) return;
+                const t = this.tweets.find(x => x.id === this.viewingTweetId); let text = input.value;
+                let replyObj = { name: 'Sec. of Technology', handle: '@SecOfTech', avatar: 'https://i.pravatar.cc/150?u=sec', text: text };
+                t.replies.unshift(replyObj);
+                input.value = ''; this.stress += 5; this.updateStats(); this.toast("Reply posted.");
+                this.injectReplyIntoDetail(replyObj, t.id);
+
+                setTimeout(() => {
+                    let otherUsers = this.twUsers.filter(u => u.h !== t.handle && u.h !== '@SecOfTech');
+                    let ru = otherUsers[Math.floor(Math.random()*otherUsers.length)];
+                    let rt = this.getContextualReply(text);
+                    let subReply = {name: ru.n, handle: ru.h, avatar: ru.a, text: `@SecOfTech ${rt}`};
+                    t.replies.unshift(subReply);
+                    if(this.viewingTweetId === t.id) this.injectReplyIntoDetail(subReply, t.id);
+                    
+                    this.twNotifications.unshift({text: `<b>${ru.n}</b> replied to you`, time: 'Just now', icon: 'chat_bubble', color: 'var(--tw-muted)'});
+                    let nb = document.getElementById('tw-notif-badge'); if(nb) nb.style.display='inline-block';
+                }, 2500);
+            },
+            injectReplyIntoDetail(replyObj, tweetId) {
+                const repCont = document.getElementById('tw-replies-list');
+                if(repCont) {
+                    repCont.insertAdjacentHTML('afterbegin', `
+                        <div style="display:flex; padding:16px; border-bottom:1px solid var(--tw-border); gap:12px; cursor:pointer; animation: slideDown 0.3s ease;" onmouseover="this.style.background='#181818'" onmouseout="this.style.background='transparent'">
+                            <div style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; flex-shrink:0; background: url('${replyObj.avatar}') center/cover;" onclick="event.stopPropagation(); game.openProfile('${replyObj.handle}')"></div>
+                            <div style="flex-grow:1;"><div><span style="font-weight:bold; color:var(--tw-text); cursor:pointer;" onclick="event.stopPropagation(); game.openProfile('${replyObj.handle}')">${replyObj.name}</span> <span style="color:var(--tw-muted); cursor:pointer;" onclick="event.stopPropagation(); game.openProfile('${replyObj.handle}')">${replyObj.handle}</span></div><div style="margin-top:4px; font-size:15px; word-break:break-word; line-height:20px; color:var(--tw-text);">${replyObj.text}</div></div>
+                        </div>
+                    `);
+                    let t = this.tweets.find(x => x.id === tweetId);
+                    if(t) {
+                        let rtsEl = document.getElementById(`tw-det-rts-${t.id}`); if(rtsEl) rtsEl.innerText = t.rts;
+                        let likesEl = document.getElementById(`tw-det-likes-${t.id}`); if(likesEl) likesEl.innerText = t.likes;
+                    }
+                }
+            },
+            openProfile(handle) {
+                let u = this.twUsers.find(x => x.h === handle);
+                if(!u && handle === '@SecOfTech') u = {n:'Sec. of Technology', h:'@SecOfTech', v:true, a:'https://i.pravatar.cc/150?u=sec', banner:'https://images.unsplash.com/photo-1555026408-041496a750df', bio:'Official account. Securing America.', f:2100000, isFollowed:false};
+                if(!u) return;
+
+                this.viewingProfile = handle;
+                this.switchTwView('profile');
+                let phn = document.getElementById('prof-header-name'); if(phn) phn.innerText = u.n;
+                
+                let userTweets = this.tweets.filter(t => t.handle === handle || t.name === u.n);
+                
+                let pc = document.getElementById('tw-profile-content');
+                if(pc) {
+                    pc.innerHTML = `
+                        <div style="height: 150px; background: url('${u.banner || 'https://images.unsplash.com/photo-1618044733300-9472054094ee'}') center/cover;"></div>
+                        <div style="padding: 16px; position:relative;">
+                            <div style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--tw-bg); background: url('${u.a}') center/cover; position:absolute; top:-60px;"></div>
+                            <div style="display:flex; justify-content:flex-end;">
+                                ${handle !== '@SecOfTech' ? `<button style="border:1px solid #ccc; background:${u.isFollowed?'transparent':'#fff'}; color:${u.isFollowed?'#fff':'#000'}; border-radius:99px; padding:8px 16px; font-weight:bold; cursor:pointer;" onclick="game.toggleFollow('${u.h}')">${u.isFollowed?'Following':'Follow'}</button>` : ''}
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <div style="font-size:20px; font-weight:900; color:var(--tw-text);">${u.n} ${u.v ? '<span class="material-icons" style="color:var(--tw-blue); font-size:18px; vertical-align:middle;">verified</span>' : ''}</div>
+                                <div style="color:var(--tw-muted); font-size:15px;">${u.h}</div>
+                            </div>
+                            <div style="margin-top: 12px; font-size:15px; color:var(--tw-text);">${u.bio || 'Federal OS user.'}</div>
+                            <div style="display:flex; gap:16px; margin-top:12px; color:var(--tw-muted);">
+                                <div><b style="color:var(--tw-text);">120</b> Following</div>
+                                <div><b style="color:var(--tw-text);">${(u.f || 500).toLocaleString()}</b> Followers</div>
+                            </div>
+                        </div>`;
                 }
 
-                requestAnimationFrame(update);
-            }
-            update();
-        }
-
-        function pop(x, y) {
-            for(let i=0; i<15; i++) {
-                const p = document.createElement('div');
-                p.className = 'confetti';
-                p.style.left = x + 'px'; p.style.top = y + 'px';
-                p.style.background = `hsl(${Math.random()*360}, 100%, 50%)`;
-                document.body.appendChild(p);
-                
-                const angle = Math.random() * Math.PI * 2;
-                const speed = 4 + Math.random() * 6;
-                let px = 0, py = 0;
-                
-                let life = 1;
-                function move() {
-                    life -= 0.02;
-                    px += Math.cos(angle) * speed;
-                    py += Math.sin(angle) * speed + (1 - life) * 5; // gravity
-                    p.style.transform = `translate(${px}px, ${py}px) rotate(${life*360}deg)`;
-                    p.style.opacity = life;
-                    if(life > 0) requestAnimationFrame(move);
-                    else p.remove();
+                const c = document.getElementById('tw-profile-timeline'); 
+                if(c) {
+                    c.innerHTML = '';
+                    if(userTweets.length === 0) c.innerHTML = `<div style="padding:40px; text-align:center; color:var(--tw-muted); font-size:16px;">@${u.n} hasn't posted recently.</div>`;
+                    userTweets.forEach(t => c.innerHTML += this.generateTweetHTML(t));
                 }
-                move();
+            },
+            toggleFollow(handle) {
+                let u = this.twUsers.find(x => x.h === handle);
+                if(u) {
+                    u.isFollowed = !u.isFollowed;
+                    if(u.isFollowed) {
+                        u.f += 1;
+                        this.twNotifications.unshift({text: `You followed <b>${u.n}</b>`, time: 'Just now', icon: 'person', color: 'var(--tw-blue)'});
+                        let nb = document.getElementById('tw-notif-badge'); if(nb) nb.style.display='inline-block';
+                    } else { u.f -= 1; }
+                    this.openProfile(handle);
+                }
+            },
+            renderTwNotifications() {
+                const c = document.getElementById('tw-notifications-list'); if(!c) return;
+                c.innerHTML = '';
+                if(this.twNotifications.length === 0) c.innerHTML = `<div style="padding:40px; text-align:center; color:var(--tw-muted); font-size:16px;">No notifications yet.</div>`;
+                this.twNotifications.forEach(n => {
+                    c.innerHTML += `
+                        <div style="display:flex; padding:16px; border-bottom:1px solid var(--tw-border); gap:12px; cursor:pointer;" onmouseover="this.style.background='#181818'" onmouseout="this.style.background='transparent'">
+                            <span class="material-icons" style="color:${n.color}; font-size:24px;">${n.icon}</span>
+                            <div style="flex-grow:1;"><div style="font-size:15px; color:var(--tw-text);">${n.text}</div><div style="color:var(--tw-muted); font-size:13px; margin-top:4px;">${n.time}</div></div>
+                        </div>`;
+                });
+            },
+
+            // --- 8. IC3 ---
+            submitTip() {
+                const inputVal = document.getElementById('suspect-ip').value.trim();
+                if(!inputVal) { this.toast("Please fill out Query."); return; }
+                
+                document.getElementById('gov-form-area').style.display = 'none'; document.getElementById('gov-pending-area').style.display = 'block';
+                this.log("FBI Transmitting... Analyzing Database.", "orange");
+                
+                setTimeout(() => {
+                    document.getElementById('gov-pending-area').style.display = 'none'; document.getElementById('gov-result-area').style.display = 'block';
+                    
+                    let val = inputVal.toLowerCase();
+                    if(val === 'jordan lee') {
+                        document.getElementById('gov-result-area').innerHTML = `<span class="material-icons" style="font-size:80px; color:#188038;">verified_user</span><h2 style="color:#188038;">BACKGROUND CLEAR</h2><p style="font-size:16px;">No criminal records found for Jordan Lee.</p><button class="btn-primary" style="margin-top:20px; background:#0a2540;" onclick="document.getElementById('gov-result-area').style.display='none'; document.getElementById('gov-form-area').style.display='block'; document.getElementById('suspect-ip').value='';">RETURN</button>`;
+                    } else if(val === 'alex vance') {
+                        document.getElementById('gov-result-area').innerHTML = `<span class="material-icons" style="font-size:80px; color:#c92a2a;">warning</span><h2 style="color:#c92a2a;">CRIMINAL RECORD FOUND</h2><p style="font-size:16px;">Alex Vance: Wanted for corporate embezzlement and fraud.</p><button class="btn-primary" style="margin-top:20px; background:#0a2540;" onclick="document.getElementById('gov-result-area').style.display='none'; document.getElementById('gov-form-area').style.display='block'; document.getElementById('suspect-ip').value='';">RETURN</button>`;
+                    } else if(inputVal === this.hackerIP) {
+                        this.hackerArrested = true; this.log("FBI Tracker: Suspect IP verified.", "green");
+                        document.getElementById('gov-result-area').innerHTML = `<span class="material-icons" style="font-size:80px; color:#188038;">check_circle</span><h2 style="color:#188038;">HACKER LOCATED</h2><p style="font-size:16px;">Tracking ID: IC3-${Math.floor(Math.random()*99999)}<br><br>FBI SWAT Team dispatched to IP: ${this.hackerIP}.</p><button class="btn-primary" style="margin-top:20px; background:#0a2540;" onclick="document.getElementById('gov-result-area').style.display='none'; document.getElementById('gov-form-area').style.display='block'; document.getElementById('suspect-ip').value='';">RETURN</button>`;
+                    } else {
+                        this.stress += 35; this.hasFine = true; this.updateDocsBadge(); this.updateStats(); audio.error();
+                        document.getElementById('gov-result-area').innerHTML = `<span class="material-icons" style="font-size:80px; color:#c92a2a;">gavel</span><h2 style="color:#c92a2a;">FALSE REPORT DETECTED</h2><p style="font-size:16px;">Violation of 18 U.S.C. § 1001.<br><br>Administrative Fine Issued.</p><button class="btn-primary" style="margin-top:20px; background:#c92a2a;" onclick="document.getElementById('gov-result-area').style.display='none'; document.getElementById('gov-form-area').style.display='block'; document.getElementById('suspect-ip').value='';">ACKNOWLEDGE</button>`;
+                        this.unlockDoc('fine', 'Federal_Fine.pdf', 'warning', 'red', 'Signature Required');
+                    }
+                }, 3000);
+            },
+
+            // --- 9. ENDINGS ---
+            evaluateEnding(override = null) {
+                let msg = ""; let rank = "";
+                
+                if (override === "ISLAND") { msg="You purchased a private island with your illicit funds and disappeared before the FBI could raid your office. You live like a king."; rank="<span style='color:#00ff41;'>ESCAPE (SECRET WIN)</span>"; }
+                else if (this.firedIntern && this.dbFixed) { msg="You threw the intern under the bus to buy yourself time to fix the database. You survived, but at what cost?"; rank="<span style='color:#fbbc04;'>THE COWARD (B-)</span>"; }
+                else if (this.tookBribe) { msg="You accepted a $2M offshore bribe and let the nation burn. The FBI traced the crypto transfer to your terminal."; rank="<span style='color:red;'>TRAITOR (FEDERAL PRISON)</span>"; }
+                else if (this.dbFixed && this.hackerArrested && !this.leakedToPress) { msg="You reverted the commit, restarted GovCloud, and submitted the hacker's IP to the FBI. You saved the country."; rank="<span style='color:#00ff41;'>S-RANK HERO</span>"; }
+                else if (this.docSigned) { msg="You failed to fix the crisis but signed the DOJ Liability Waiver. The administration officially blamed the entire breach on your 'rogue actions.' You were fired and blacklisted."; rank="<span style='color:red;'>THE FALL GUY</span>"; }
+                else if (this.leakedToPress) { msg="You angered the Leaker by ignoring them or sending insufficient funds. They released 50GB of classified citizen data directly to CNN. The President was impeached, and you were fired on live television."; rank="<span style='color:red;'>NATIONAL EMBARRASSMENT</span>"; }
+                else if (this.stress >= 100) { msg="The stress of the crisis was too much. You collapsed at your desk before you could fix the servers. The Secret Service had to carry you out."; rank="<span style='color:red;'>BURNOUT (D-)</span>"; }
+                else { msg="You failed to stop the breach. The time ran out, and you were immediately relieved of your duties."; rank="<span style='color:red;'>INCOMPETENT (FIRED)</span>"; }
+                
+                let mm = document.getElementById('main-menu');
+                if(mm) {
+                    mm.innerHTML = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; width:100%;"><h1 style="font-family:monospace; font-size:4rem; margin-bottom:20px;">SIMULATION OVER</h1><p style="font-size:1.4rem; max-width:800px; margin:0 auto 20px auto; line-height:1.6;">${msg}</p><h2>RANK: ${rank}</h2><br><button class="btn-primary" style="padding:16px 40px; font-size:18px; margin-top:30px;" onclick="window.location.reload()">Restart</button></div>`;
+                    mm.style.display = 'flex';
+                }
             }
-        }
-
-        function hint() {
-            alert("The answer isn't a button. It's how you hold the world!");
-      
-        }
-        
-        
-
-
+        };
     </script>
 </body>
 </html>
